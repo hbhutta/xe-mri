@@ -42,3 +42,13 @@ a consequence of the `imresize3` function in Matlab.
   to the ventilation image as well
 
 First registration phase finished on 11/5/2024
+
+
+# git stuff
+1. `git init` makes this a master branch by default
+2. `gite remote add origin <repo>`
+3. `git checkout main`
+4. `git status` to ensure that the current branch is main
+5. `git pull origin main --allow-unrelated-histories` to pull stuff in main that is not in master because the default branch is master
+6. `git push origin main` this puts all the stuff in master into main
+7. `git push origin --delete master` deletes master; now we just have main 
