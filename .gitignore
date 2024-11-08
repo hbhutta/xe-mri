@@ -1,0 +1,13 @@
+imgs
+lib
+lib64
+testing
+bin
+etc
+include
+reference
+share
+pyvenv.cfg
+*.ipynb
+*.m
+__pycache__/
