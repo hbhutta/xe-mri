@@ -90,3 +90,7 @@ constants.StatsIOFields.VENT_DEFECT_PCT: metrics.bin_percentage(
                 self.image_gas_binned, np.array([1]), self.mask
             ),
 ```
+- `img_utils.py` also has important functions
+- `constants.py` contains "object" classes and enums that define the constant values used in certain processes like combine pdf, generating statistical plots, etc...
+- `reconstruction.py` has functions for reconstructing the 3D volumetric image from the k-space data
+- `calculate_rbc_m_ratio()` calculates the RBC ratio, defined in `subject_classmap.py` 
