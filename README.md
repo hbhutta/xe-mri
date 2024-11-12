@@ -73,3 +73,20 @@ nib.save(img=nib.nifti1.Nifti1Image(masked, vent_mask_imag.affine), filename="__
 - See if imresize3 in matlab has a python equivalent, if not implement it in Python,
 or use matlab api/wrapper in python
 - rewriting imresize3 process in python
+
+
+# Duke pipeline information:
+`metrics.py` calculates lung statistics, such as DLCO, alveolar_volume, etc..
+- `bin_percentage()` calculates defect percentage
+  - To see how it is used, look at `subject_classmap.py`
+
+- `get_statistics()` in `subject_classmap.py` creates 
+a dictionary of statistics including the defect percentages
+for RBC, membrane and ventilation
+
+lines 620-622 in `subject_classmap.py`:
+```python
+constants.StatsIOFields.VENT_DEFECT_PCT: metrics.bin_percentage(
+                self.image_gas_binned, np.array([1]), self.mask
+            ),
+```

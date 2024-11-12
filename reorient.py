@@ -1,6 +1,7 @@
 from utils import get_common_files, aff2axcodes_RAS, get_subdirs, nib_save, set_qform
 import nibabel as nib
 from sys import argv
+import logging
 
 BASE_DIR = 'imgs'
 
@@ -17,7 +18,7 @@ ve_file_paths = get_common_files(base_dir=BASE_DIR, filename='gas_highreso_scale
 # assert 0 == 1
 #for ct_file, mr_file, ve_file, lo_file, patient in zip(ct_file_paths, mr_file_paths, ve_file_paths, lo_file_paths, subdir_paths):
 for ct_file, mr_file, ve_file, patient in zip(ct_file_paths, mr_file_paths, ve_file_paths, subdir_paths):
-    print(f"Patient {patient}")
+    logging.info(f"Reorienting CT, MRI, and ventilation image for patient: {patient}")
     # print(f"CT mask file path: {ct_file} |\
             # MRI mask file path: {mr_file} |\
             # Ventilation image file path: {ve_file} |\
