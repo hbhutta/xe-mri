@@ -64,7 +64,7 @@ def set_qform(img: FileBasedImage, type: bool) -> None:
     aff = img.affine
     if type:
         for i in range(3):
-            if (aff[i][i] > 0):
+            if (aff[i][i] > 0): # The sign along the diagonal will not be flipped if it is already negative
                 aff[i][i] = -aff[i][i]
     else:
         aff = np.array([[0, -1, 0, 0],
@@ -85,6 +85,7 @@ prints out more information such as:
 def nib_save(img: FileBasedImage, filename: str) -> None:
     nib.save(img=img, filename=filename)
     print(aff2axcodes_RAS(img.affine))
+    print(f"Saved image to {filename}")
 
 
 """

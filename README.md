@@ -3,16 +3,17 @@
 - Most of these helper functions just print out useful information, or they help in retrieving common files across the different patient directories (e.g. `readANTS` and `get_common_files`)
 
 ---
-1. `resize.m`
-- This is a Matlab script that resizes the MRI mask to match the size of the CT mask. 
-- The `dim` (number of voxels in the xyz directions) and the `pixdim` (voxel spacing; size of voxel in the xyz directions), 
+1. [`resize.py`](resize.py)
+- This is a Python script that resizes the MRI mask to *approximately* match the size of the CT mask.
+  - An approximate match is enough to enable a more accurate deformable registration in [`register.py`](register.py)
+- ~~The `dim` (number of voxels in the xyz directions) and the `pixdim` (voxel spacing; size of voxel in the xyz directions), 
 are matched to what values they have in the CT mask's header file. This is done as
-a consequence of the `imresize3` function in Matlab. 
+a consequence of the `imresize3` function in Matlab.~~
 - After resizing, transfer the local `imgs/` directory into the server
 - One can check the header file in ITK-SNAP through `Tools > Image Information`, to confirm that the resize changes were applied.
 2. `register.sh`
 - Runs all these scripts:
-  1. `cleanup.sh`
+  1. [`cleanup.sh`](cleanup.sh)
   - This is an optional script that cleans up any files generated from previous
     registration attempts.
   - Used primarily when testing registration.
@@ -66,3 +67,9 @@ vent_mask_volm.shape
 masked = apply_mask(mask=mask, data=vent_mask_volm)
 nib.save(img=nib.nifti1.Nifti1Image(masked, vent_mask_imag.affine), filename="___.nii")
 ```
+
+
+# Todo:
+- See if imresize3 in matlab has a python equivalent, if not implement it in Python,
+or use matlab api/wrapper in python
+- rewriting imresize3 process in python
