@@ -20,7 +20,6 @@ subdir_paths = get_subdirs(dir=BASE_DIR)
 
 
 def register(ct_filename: str, mri_filename: str, patient: str) -> None:
-    # tried: Similarity, Affine, also try AffineFast
     ct_ants = ants.image_read(filename=ct_filename)
     mri_ants = ants.image_read(filename=mri_filename)
 
@@ -70,8 +69,6 @@ mri_nii = read_ANTS(as_type='proton', dir=BASE_DIR, ret_ants=False,
 vent_nii = read_ANTS(as_type='vent', dir=BASE_DIR,
                      ret_ants=False, vent_filename="gas_highreso_scaled_mutated_affine.nii")
 
-# print(ct_nii, mri_nii, vent_nii, subdir_paths)
-# assert 0 == 1
 for ct, mri, vent, patient in zip(ct_nii, mri_nii, vent_nii, subdir_paths):
     print(f"ct {ct} | mri {mri} | vent {
           vent} | patient {os.path.basename(patient)}")

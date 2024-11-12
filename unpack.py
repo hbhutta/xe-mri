@@ -21,9 +21,7 @@ for ct_file, patient in zip(ct_files, subdir_paths):
         print(reg)
 
         warped_proton = reg['warpedmovout']
-
         dst = f"{patient}/warped_mri.nii.gz"
-
         ants_ct = ants.image_read(ct_file)
 
         try:

@@ -1,5 +1,5 @@
 try:
-    from utils import read_ANTS, get_subdirs
+    from utils import get_subdirs, get_common_files
 except ImportError as e:
     print(f"An error occurred: {e}")
 import sys
@@ -11,17 +11,10 @@ from time import time
 start_time = time()
 BASE_DIR = sys.argv[1]
 NUM_PATIENTS = 25
+
 subdir_paths = get_subdirs(dir=BASE_DIR)[0:NUM_PATIENTS]
-
-ct_nii = read_ANTS(as_type='ct', dir=BASE_DIR, ret_ants=False,
-                   ct_filename="CT_mask_neg_affine.nii")[0:NUM_PATIENTS]
-vent_nii = read_ANTS(as_type='vent', dir=BASE_DIR,
-                     ret_ants=False, vent_filename="gas_highreso_scaled_mutated_affine.nii")[0:NUM_PATIENTS]
-
-
-print(ct_nii, vent_nii)
-print(subdir_paths)
-# assert 0 == 1
+ct_file_paths = get_common_files(base_dir=BASE_DIR, filename='CT_mask.nii')[0:NUM_PATIENTS]
+ve_file_paths = get_common_files(base_dir=BASE_DIR, filename='gas_highreso_scaled.nii')[0:NUM_PATIENTS]
 
 
 def apply_fwdtranforms(ANTS_CT, ANTS_Vent, transformlist):
@@ -104,5 +97,3 @@ for ct, vent, patient in zip(ct_nii, vent_nii, subdir_paths):
     except AttributeError as e:
         print(warped_vent)
 
-end_time = time()
-print(f"That took: {end_time - start_time} mins/seconds")
