@@ -57,7 +57,7 @@ First registration phase finished on 11/5/2024
 - [ ] ???
 
 # Current tasks
-- [  ] Figure out how VDP is calculated in duke pipeline
+- [ ] Figure out how VDP is calculated in duke pipeline
 
 # Masking a ventilation image with lobar mask (example)
 ```python
