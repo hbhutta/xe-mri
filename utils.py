@@ -85,3 +85,96 @@ prints out more information such as:
 def nib_save(img: FileBasedImage, filename: str) -> None:
     nib.save(img=img, filename=filename)
     print(aff2axcodes_RAS(img.affine))
+
+
+"""
+Returns a mask
+"""
+
+
+def mask_(data: np.ndarray | np.memmap, target: np.float64 | np.int64 | list) -> list[bool]:
+    if type(target) == list:
+        mask = list(np.vectorize(lambda x: (x in target))(data))
+    else:
+        mask = (np.vectorize(lambda x: (x == target))(data))
+    if np.any(mask == True) == np.False_:
+        print("The mask is empty, having only zeros.")
+        return mask
+
+
+"""
+Returns a count of the number of pixels in the data matrix 
+which are in the target
+"""
+
+
+def count_(data: np.ndarray | np.memmap, target: np.float64 | np.int64 | list) -> int:
+    return np.count_nonzero(mask_(data=data, target=target))
+
+"""
+Splits a mask into as many masks as there are unique pixel intensities
+"""
+
+def split_mask(mask: np.memmap | np.ndarray) -> list[np.memmap | np.ndarray]:
+    splits = []
+    vals = [val for val in np.unique(mask) if val != 0]
+    for val in vals:
+        splits.append(np.where(mask == val, mask, 0))
+
+    """
+    Assert that the number of masks resulting from
+    the split equals the number of unique values 
+    in the mask.
+    
+    For example, if a lobar mask has five unique values
+    (one for each lobe), then there should be five splits
+    """
+    assert len(splits) == len(vals)
+    n = len(splits)
+
+    for i in range(n):
+        """
+        Assert that the count of non-zero pixels other than 
+        the pixel value associated to this split are zero
+        """
+        assert count_(data=splits[i], target=[
+                      val for val in vals if val != vals[i]]) == 0
+
+        """
+        Assert that the count of pixels of value val[i]
+        in splits[i] is the same as the count of pixels 
+        of value val[i] in the original mask
+        """
+        assert count_(data=splits[i], target=vals[i]) == count_(mask, vals[i])
+
+    return splits
+
+
+"""
+Returns the element-wise (Hadamard) product between the mask and the data
+"""
+
+
+def apply_mask(mask: np.memmap | np.ndarray, data: np.memmap | np.ndarray) -> np.memmap | np.ndarray:
+    if mask.shape == data.shape:
+        print("Mask and data shapes match")
+        return np.multiply(mask, data)
+    return None
+
+
+"""
+Get a nibabel FileBasedImage from a 3D data matrix
+"""
+
+
+def get_nib(fdata: np.ndarray):
+    pass
+
+
+"""
+Return a list of file-based images
+"""
+
+
+def splits_to_imgs(original_mask: np.memmap | np.ndarray) -> list[FileBasedImage]:
+    pass

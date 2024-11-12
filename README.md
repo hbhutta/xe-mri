@@ -51,4 +51,18 @@ First registration phase finished on 11/5/2024
 4. `git status` to ensure that the current branch is main
 5. `git pull origin main --allow-unrelated-histories` to pull stuff in main that is not in master because the default branch is master
 6. `git push origin main` this puts all the stuff in master into main
-7. `git push origin --delete master` deletes master; now we just have main` 
+7. `git push origin --delete master` deletes master; now we just have main`
+
+# Current problems
+- [ ] ???
+
+# Current tasks
+- [  ] Figure out how VDP is calculated in duke pipeline
+
+# Masking a ventilation image with lobar mask (example)
+```python
+mask.shape
+vent_mask_volm.shape
+masked = apply_mask(mask=mask, data=vent_mask_volm)
+nib.save(img=nib.nifti1.Nifti1Image(masked, vent_mask_imag.affine), filename="___.nii")
+```
