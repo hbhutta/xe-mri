@@ -94,3 +94,45 @@ constants.StatsIOFields.VENT_DEFECT_PCT: metrics.bin_percentage(
 - `constants.py` contains "object" classes and enums that define the constant values used in certain processes like combine pdf, generating statistical plots, etc...
 - `reconstruction.py` has functions for reconstructing the 3D volumetric image from the k-space data
 - `calculate_rbc_m_ratio()` calculates the RBC ratio, defined in `subject_classmap.py` 
+
+Currently being run from command line as:
+```python
+python main.py --config config/PIm_Registery/PIm02_master.py
+```
+
+Want to run in a way that user can choose:
+- Manual or automatic segmentation with `--manual` flag
+  - If --manual flag is not specified, use automatic by default
+- Use python's argparse package to parse flags from command line
+- PIm subject id with `--id <PIm_ID>` flag
+  - Raise an error if this flag is not specified
+```python
+python main.py --config config/PIm_Registery/PIm02_master.py --manual
+```
+
+Consider adding xe-mri repo as submodule in the consortium repo
+
+
+# duke pipeline package requirements
+- opencv_python and pandas requires gcc, so not yet installed
+
+# Questions to ask duke
+- Why do all the test subject files have self.rbc_m_ratio initialized, when there is already a function to calculate rbc:m ratio?
+
+
+# singularity:
+Create a Singularity container called *XeGasContainer* having the latest version of the *Ubuntu* Linux distribution:
+```bash
+apptainer build --sandbox XeGasContainer docker://ubuntu:latest
+```
+Refer to https://apptainer.org/docs/user/main/build_a_container.html
+
+Check that `apt-get` is available as a command within the container. `apt-get` allows for commands to be installed
+```
+apptainer exec --writeable XeGasContainer/ apt-get --help
+```
+If the help page loads then apt-get is available. Alternatively, one can check if apt-get is in the `bin/` folder of the container
+
+
+# utils
+[`split.py`](demo/split.py) demonstrates how to use the `utils.split_masks()` function on a CT mask with two different labels (one for each lung) 
