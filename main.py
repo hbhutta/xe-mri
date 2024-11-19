@@ -29,20 +29,28 @@ flags.DEFINE_string(name="dir", default=None, help="""
 
 
 def process(dir):
-    print("Recieved a set of files for a single patient")
-
     # Minimum set of files that must exist for any patient, with exactly these names
-    ct_file, mr_file, gas, rbc, mem = [os.path.join(dir, fn) for fn in [
+    files = [
         "CT_mask.nii",
         "mask_reg_edited.nii",
         "gas_highreso.nii",
         "rbc2gas.nii",
         "membrane2gas.nii"
-    ]]
+    ]
+
+    patient = dir[:-5]
+
+    ct_file, mr_file, gas, rbc, mem = [os.path.join(dir, fn) for fn in files]
+
+    for fn in files:
+        if not os.path.exists(fn):
+            raise (f"""
+                  File {fn} does not exist for patient {patient}
+                  but it is required for processing them in this pipeline.
+                  """)
 
     print(f"ct {ct_file} | mr {mr_file} | gas {gas} | rbc {rbc} | mem {mem}")
 
-    patient = dir[:-5]
     vens = [gas, rbc, mem]
     for ven in vens:
         reorient(ct_file, mr_file, ven)
@@ -65,7 +73,7 @@ def main(argv):
             print(f"Processing patient {subdir[:-5]}")
             process(dir=subdir)
     else:
-        print("Recieved directory of single patient.")
+        print("Recieved a directory of single patient.")
         print(f"Processing patient {dir[:-5]}")
         process(dir=dir)
 
