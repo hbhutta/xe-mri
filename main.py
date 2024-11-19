@@ -1,5 +1,5 @@
 from absl import app, flags
-from utils import get_common_files, get_subdirs, has_sub_dirs
+from utils import get_subdirs, has_sub_dirs
 import os
 import glob
 from sh import gunzip
@@ -30,6 +30,8 @@ flags.DEFINE_string(name="dir", default=None, help="""
 
 def process(dir):
     print("Recieved a set of files for a single patient")
+
+    # Minimum set of files that must exist for any patient, with exactly these names
     ct_file, mr_file, gas, rbc, mem = [os.path.join(dir, fn) for fn in [
         "CT_mask.nii",
         "mask_reg_edited.nii",
@@ -58,10 +60,13 @@ def main(argv):
     dir = FLAGS.dir
     print(dir)
     if has_sub_dirs(dir):
+        print("Recieved a batch directory of multiple patients.")
         for subdir in get_subdirs(dir):
             print(f"Processing patient {subdir[:-5]}")
             process(dir=subdir)
     else:
+        print("Recieved directory of single patient.")
+        print(f"Processing patient {dir[:-5]}")
         process(dir=dir)
 
 
