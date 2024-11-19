@@ -200,33 +200,20 @@ def apply_mask(mask: np.memmap | np.ndarray, data: np.memmap | np.ndarray) -> np
 
 
 """
-Get a nibabel FileBasedImage from a 3D data matrix
-"""
-
-
-def get_nib(fdata: np.ndarray):
-    pass
-
-
-"""
-Return a list of file-based images
-"""
-
-
-def splits_to_imgs(original_mask: np.memmap | np.ndarray) -> list[FileBasedImage]:
-    pass
-
-
-"""
 Returns true if the given directory has any subdirectories
-
 Used for distinguishing between a node directory and a parent directory.
-
 A node directory is one that has no subdirectories.
-
 A parent directory is one that has at least another level of subdirectories.
 """
 
 
 def has_sub_dirs(dir: str) -> bool:
     return len(set([os.path.dirname(p) for p in glob.glob(dir + "/*/*")])) == True
+
+"""
+Get file paths in dir from list of files and path to dir
+"""
+def get_files(dir: str, files: list[str] | str) -> list[str] | str:
+    if type(files) == str:
+        return os.path.join(dir, files)
+    return [os.path.join(dir, fn) for fn in files]

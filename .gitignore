@@ -1,3 +1,5 @@
+
+# Ignore anything following these patterns
 imgs
 imgs_*
 lib
@@ -12,3 +14,6 @@ pyvenv.cfg
 *.ipynb
 *.m
 __pycache__/
+
+# Except for this file
+!matlab/resize.m

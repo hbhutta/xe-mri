@@ -3,7 +3,7 @@ import numpy as np
 from nibabel.filebasedimages import FileBasedImage
 from nibabel.nifti1 import Nifti1Image
 import nibabel as nib 
-from utils import nib_save, get_common_files, get_subdirs
+from scripts.utils import nib_save, get_common_files, get_subdirs
 import logging
 
 BASE_DIR = 'imgs'

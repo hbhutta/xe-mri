@@ -1,6 +1,7 @@
 import ants
 import pickle
-import os 
+import os
+
 
 def warp_image(fixed, moving, transform_list, interpolation='linear'):
     '''
@@ -35,22 +36,28 @@ def warp_image(fixed, moving, transform_list, interpolation='linear'):
     ants_fixed = ants.image_read(fixed)
     ants_moving = ants.image_read(moving)
 
-    trans = ants.apply_transforms(fixed=ants_fixed, 
+    trans = ants.apply_transforms(fixed=ants_fixed,
                                   moving=ants_moving,
                                   transformlist=transform_list,
-                                  interpolator=interpolation, 
+                                  interpolator=interpolation,
                                   imagetype=0,
-                                  whichtoinvert=None, 
+                                  whichtoinvert=None,
                                   defaultvalue=0, verbose=True)
     if interpolation in ['nearestNeighbor', 'multiLabel', 'genericLabel']:
         trans[trans < 1] = 0
     return trans
 
 
-def warp_vent(ct: str, patient: str, vent: str) -> None:
-    print(f"ct {ct} | vent {vent} | patient {os.path.basename(patient)}")
+def warp_vent(ct: str, dir: str, vent: str) -> None:
 
-    with open(patient + f"/{os.path.basename(patient)}_reg.pkl", "rb") as file:
+    patient_PIm_ID = os.path.basename(dir[:-1])
+    print(patient_PIm_ID)
+
+    print(f"ct {ct} | vent {vent} | patient {patient_PIm_ID}")
+
+    reg_filename = f"{dir}{patient_PIm_ID}_reg.pkl"
+
+    with open(reg_filename, "rb") as file:
         mytx = pickle.load(file)
         print(mytx)
 
@@ -62,11 +69,11 @@ def warp_vent(ct: str, patient: str, vent: str) -> None:
         print(f"warped_vent has value {
               warped_vent} and type {type(warped_vent)}")
         print(e)
-        
+
     try:
         print(type(warped_vent))
-        filename = f"{patient}/{os.path.basename(patient)}_warped_{os.path.basename(vent)}"
+        filename = f"{
+            dir}/{patient_PIm_ID}_warped_{os.path.basename(vent)}.nii"
         ants.image_write(image=warped_vent, filename=filename)
     except AttributeError as e:
         print(warped_vent)
-

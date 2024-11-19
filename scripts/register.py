@@ -4,9 +4,16 @@ import pickle
 from time import time
 
 
-def register(ct_filename: str, mri_filename: str, patient: str) -> None:
-    reg_filename = f"{patient}/{os.path.basename(patient)}_reg.pkl"
+def register(ct_filename: str, mri_filename: str, dir: str) -> None:
+    patient_PIm_ID = os.path.basename(dir[:-1])
+    print(patient_PIm_ID)
+    reg_filename = f"{dir}{patient_PIm_ID}_reg.pkl"
+    print(reg_filename) 
+    print(os.path.exists(reg_filename))
+    return
     if not os.path.exists(reg_filename):
+        print(f"Creating {reg_filename} ...") # e.g. imgs/PIm0216/PIm0216_reg.pkl
+        print(f"Performing CT-MRI registration...")
         start_time = time()
         print(type(ct_filename))
         ct_ants = ants.image_read(filename=ct_filename)
@@ -45,12 +52,11 @@ def register(ct_filename: str, mri_filename: str, patient: str) -> None:
                                 verbose=True,
                                 multivariate_extras=None)
 
-        print(f"Finished similarity registration for patient {
-              os.path.basename(patient)}!\n\n\n")
+        print(f"Finished similarity registration for patient {patient_PIm_ID}!\n\n\n")
 
-        with open(f"{patient}/{os.path.basename(patient)}_reg.pkl", "wb") as file:
+        with open(reg_filename, "wb") as file:
             pickle.dump(reg, file)
-            print(f"{patient}/{os.path.basename(patient)}_reg.pkl saved!")
+            print(f"Registration output serialized to {reg_filename}")
         end_time = time()
         print(f"That took: {end_time - start_time} mins/seconds")
 
