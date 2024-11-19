@@ -1,21 +1,8 @@
-from utils import get_subdirs, read_ANTS
 import os
-import nibabel as nib
-from sys import argv
 import pickle
 import ants
 
-BASE_DIR = argv[1]
-NUM_PATIENTS = 25
-subdir_paths = get_subdirs(dir=BASE_DIR)[0:NUM_PATIENTS]
-print(subdir_paths)
-
-ct_files = read_ANTS(as_type='ct', dir=BASE_DIR,
-                     ret_ants=False, ct_filename='CT_mask_neg_affine.nii')[0:NUM_PATIENTS]
-print(ct_files)
-
-for ct_file, patient in zip(ct_files, subdir_paths):
-    print(patient)
+def unpack(ct_file: str, patient: str) -> None:
     with open(f"{patient}/{os.path.basename(patient)}_reg.pkl", "rb") as file:
         reg = pickle.load(file)
         print(reg)
@@ -47,7 +34,7 @@ for ct_file, patient in zip(ct_files, subdir_paths):
 
         except AssertionError as e:
             print(f"Assertion failed: {e}")
-            break
+            return 
 
     ants.image_write(image=warped_proton, filename=dst)
     print(f"Wrote ANTsImage to: {dst}")

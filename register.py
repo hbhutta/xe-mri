@@ -6,8 +6,11 @@ from time import time
 
 def register(ct_filename: str, mri_filename: str, patient: str) -> None:
     start_time = time()
-
+    
+    print(type(ct_filename))
     ct_ants = ants.image_read(filename=ct_filename)
+   
+    print(mri_filename) 
     mri_ants = ants.image_read(filename=mri_filename)
 
     type_of_transform = "Similarity"

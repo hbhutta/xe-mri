@@ -1,138 +1,19 @@
-# Script order
-- Many of the `.py` files use helper functions defined in `utils.py`
-- Most of these helper functions just print out useful information, or they help in retrieving common files across the different patient directories (e.g. `readANTS` and `get_common_files`)
-
----
-1. [`resize.py`](resize.py)
-- This is a Python script that resizes the MRI mask to *approximately* match the size of the CT mask.
-  - An approximate match is enough to enable a more accurate deformable registration in [`register.py`](register.py)
-- ~~The `dim` (number of voxels in the xyz directions) and the `pixdim` (voxel spacing; size of voxel in the xyz directions), 
-are matched to what values they have in the CT mask's header file. This is done as
-a consequence of the `imresize3` function in Matlab.~~
-- After resizing, transfer the local `imgs/` directory into the server
-- One can check the header file in ITK-SNAP through `Tools > Image Information`, to confirm that the resize changes were applied.
-2. `register.sh`
-- Runs all these scripts:
-  1. [`cleanup.sh`](cleanup.sh)
-  - This is an optional script that cleans up any files generated from previous
-    registration attempts.
-  - Used primarily when testing registration.
-  2. `reorient.py`
-  - At this stage, the MRI masks closely match the size of the CT masks, but they
-    just need to be reoriented (and translated, and deformed using the subsequent
-  scripts).
-  - This script will modify the affine matrices of the CT masks to have RAS
-    axis codes, and the affine matrices of the MRI masks to have SRA axis codes.
-  3. `register.py`
-  - This is the first phase of registration. The resized and reoriented MR masks 
-    are aligned to match the CT masks by translation.
-  - The `type_of_transform` parameter was set to `Similarity`.
-  - In the second and final phase of registration, the resized, reoriented and translated MR masks undergoes a deformation so that the boundary 
-  of the MR mask closely matches the boundary in the CT mask.
-  - The `type_of_transform` parameter in the second stage was set to `SynAggro`.
-  4. `unpack.py`
-  - This script loads the warped MRI images from the serialized output of the similarity registration 
-  in the previous step. 
-  - The warped MRI images are saved in the patient directories (e.g. PIm0028)
-  that they originally came from.
-  5. `unzip.sh`
-  - This script just unzips the warped MRI images generated in the registration process.
-  - The file extension of the warped MRI images changes from `.nii.gz` to `.nii`
-  6. `warp_vent.py`
-  - Applies the forward transformations from the registration (of the MRI mask onto the CT mask) 
-  to the ventilation image as well
-
-First registration phase finished on 11/5/2024
+This registers MRI to CT images for a patient (or a batch of patients)
+and applies the forward transforms from the registration to the 
+ventilation images
 
 
-# git stuff
-1. `git init` makes this a master branch by default
-2. `gite remote add origin <repo>`
-3. `git checkout main`
-4. `git status` to ensure that the current branch is main
-5. `git pull origin main --allow-unrelated-histories` to pull stuff in main that is not in master because the default branch is master
-6. `git push origin main` this puts all the stuff in master into main
-7. `git push origin --delete master` deletes master; now we just have main`
+Run pipeline with
 
-# Current problems
-- [ ] ???
-
-# Current tasks
-- [ ] Figure out how VDP is calculated in duke pipeline
-
-# Masking a ventilation image with lobar mask (example)
 ```python
-mask.shape
-vent_mask_volm.shape
-masked = apply_mask(mask=mask, data=vent_mask_volm)
-nib.save(img=nib.nifti1.Nifti1Image(masked, vent_mask_imag.affine), filename="___.nii")
+
+python main.py --dir DIR
 ```
 
+`DIR` is either a single patient directory or a batch of patient directories.
 
-# Todo:
-- See if imresize3 in matlab has a python equivalent, if not implement it in Python,
-or use matlab api/wrapper in python
-- rewriting imresize3 process in python
+For more explanation of the flags used to run `main.py`, run:
 
-
-# Duke pipeline information:
-`metrics.py` calculates lung statistics, such as DLCO, alveolar_volume, etc..
-- `bin_percentage()` calculates defect percentage
-  - To see how it is used, look at `subject_classmap.py`
-
-- `get_statistics()` in `subject_classmap.py` creates 
-a dictionary of statistics including the defect percentages
-for RBC, membrane and ventilation
-
-lines 620-622 in `subject_classmap.py`:
 ```python
-constants.StatsIOFields.VENT_DEFECT_PCT: metrics.bin_percentage(
-                self.image_gas_binned, np.array([1]), self.mask
-            ),
+python main.py --help
 ```
-- `img_utils.py` also has important functions
-- `constants.py` contains "object" classes and enums that define the constant values used in certain processes like combine pdf, generating statistical plots, etc...
-- `reconstruction.py` has functions for reconstructing the 3D volumetric image from the k-space data
-- `calculate_rbc_m_ratio()` calculates the RBC ratio, defined in `subject_classmap.py` 
-
-Currently being run from command line as:
-```python
-python main.py --config config/PIm_Registery/PIm02_master.py
-```
-
-Want to run in a way that user can choose:
-- Manual or automatic segmentation with `--manual` flag
-  - If --manual flag is not specified, use automatic by default
-- Use python's argparse package to parse flags from command line
-- PIm subject id with `--id <PIm_ID>` flag
-  - Raise an error if this flag is not specified
-```python
-python main.py --config config/PIm_Registery/PIm02_master.py --manual
-```
-
-Consider adding xe-mri repo as submodule in the consortium repo
-
-
-# duke pipeline package requirements
-- opencv_python and pandas requires gcc, so not yet installed
-
-# Questions to ask duke
-- Why do all the test subject files have self.rbc_m_ratio initialized, when there is already a function to calculate rbc:m ratio?
-
-
-# singularity:
-Create a Singularity container called *XeGasContainer* having the latest version of the *Ubuntu* Linux distribution:
-```bash
-apptainer build --sandbox XeGasContainer docker://ubuntu:latest
-```
-Refer to https://apptainer.org/docs/user/main/build_a_container.html
-
-Check that `apt-get` is available as a command within the container. `apt-get` allows for commands to be installed
-```
-apptainer exec --writeable XeGasContainer/ apt-get --help
-```
-If the help page loads then apt-get is available. Alternatively, one can check if apt-get is in the `bin/` folder of the container
-
-
-# utils
-[`split.py`](demo/split.py) demonstrates how to use the `utils.split_masks()` function on a CT mask with two different labels (one for each lung) 

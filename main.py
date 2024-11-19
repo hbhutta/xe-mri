@@ -1,10 +1,13 @@
 from absl import app, flags
 from utils import get_common_files, get_subdirs, has_sub_dirs
-import os 
+import os
 import glob
+from sh import gunzip
 
 from reorient import reorient
 from register import register
+from unpack import unpack
+from warp_vent import warp_vent
 
 FLAGS = flags.FLAGS
 
@@ -16,7 +19,7 @@ flags.DEFINE_string(name="dir", default=None, help="""
                     the entire program will run for each patient.
                     
                     If the directory passed is for a single patient,
-                    only that patient's file will be processed.
+                    only that patient's files will be processed.
                     
                     This is for convenience and testing purposes.
                     
@@ -25,30 +28,42 @@ flags.DEFINE_string(name="dir", default=None, help="""
                     """, required=True)
 
 
+def process(dir):
+    print("Recieved a set of files for a single patient")
+    ct_file, mr_file, gas, rbc, mem = [os.path.join(dir, fn) for fn in [
+        "CT_mask.nii",
+        "mask_reg_edited.nii",
+        "gas_highreso.nii",
+        "rbc2gas.nii",
+        "membrane2gas.nii"
+    ]]
+
+    print(f"ct {ct_file} | mr {mr_file} | gas {gas} | rbc {rbc} | mem {mem}")
+
+    patient = dir[:-5]
+    vens = [gas, rbc, mem]
+    for ven in vens:
+        reorient(ct_file, mr_file, ven)
+
+    register(ct_filename=ct_file, mri_filename=mr_file, patient=patient)
+
+    gz = glob.glob(os.path.join(dir, "warped_mri.nii.gz"))[0]
+    gunzip(gz, "--keep", "--force")
+
+    for ven in vens:
+        warp_vent(ct=ct_file, patient=patient, vent=ven)
+
+
 def main(argv):
     dir = FLAGS.dir
     print(dir)
     if has_sub_dirs(dir):
-        print("Recieved a batch of directories, getting common files...")
-        subdirs = get_subdirs(dir=dir)
-        ct_files, mr_files, ve_files = [get_common_files(base_dir=dir, filename=fn) for fn in [
-          "CT_mask.nii",
-          "mask_reg_edited.nii",
-          "gas_highreso.nii"
-        ]]
-        reorient(ct_files, mr_files, ve_files)
-        
-        for ct, mr, patient in zip(ct_files, mr_files, subdirs):
-           register(ct, mr, patient) 
+        for subdir in get_subdirs(dir):
+            print(f"Processing patient {subdir[:-5]}")
+            process(dir=subdir)
     else:
-        print("Recieved a set of files for a single patient")
-        ct_file, mr_file, ve_file = [glob.glob(os.path.join(dir, fn)) for fn in [
-          "CT_mask.nii",
-          "mask_reg_edited.nii",
-          "gas_highreso.nii"
-        ]]
-        reorient(ct_file, mr_file, ve_file)
-        register(ct_filenme=ct_file, mri_filename=mr_file, patient=dir[5:])
+        process(dir=dir)
+
 
 if __name__ == "__main__":
     app.run(main)

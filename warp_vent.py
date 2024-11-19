@@ -1,31 +1,6 @@
-try:
-    from utils import get_subdirs, get_common_files
-except ImportError as e:
-    print(f"An error occurred: {e}")
-import sys
 import ants
 import pickle
-import os
-from time import time
-
-start_time = time()
-BASE_DIR = sys.argv[1]
-NUM_PATIENTS = 25
-
-subdir_paths = get_subdirs(dir=BASE_DIR)[0:NUM_PATIENTS]
-ct_file_paths = get_common_files(base_dir=BASE_DIR, filename='CT_mask.nii')[0:NUM_PATIENTS]
-ve_file_paths = get_common_files(base_dir=BASE_DIR, filename='gas_highreso_scaled.nii')[0:NUM_PATIENTS]
-
-
-def apply_fwdtranforms(ANTS_CT, ANTS_Vent, transformlist):
-    trans = ants.apply_transforms(fixed=ANTS_CT, moving=ANTS_Vent,
-                                  transformlist=transformlist,
-                                  interpolator='linear', imagetype=0,
-                                  whichtoinvert=None, compose=None,
-                                  defaultvalue=0, verbose=True)
-
-    return trans
-
+import os 
 
 def warp_image(fixed, moving, transform_list, interpolation='linear'):
     '''
@@ -66,16 +41,14 @@ def warp_image(fixed, moving, transform_list, interpolation='linear'):
                                   interpolator=interpolation, 
                                   imagetype=0,
                                   whichtoinvert=None, 
-                                  #compose=None,
                                   defaultvalue=0, verbose=True)
     if interpolation in ['nearestNeighbor', 'multiLabel', 'genericLabel']:
         trans[trans < 1] = 0
     return trans
 
 
-for ct, vent, patient in zip(ct_nii, vent_nii, subdir_paths):
-    print(f"ct {ct} | vent {
-          vent} | patient {os.path.basename(patient)}")
+def warp_vent(ct: str, patient: str, vent: str) -> None:
+    print(f"ct {ct} | vent {vent} | patient {os.path.basename(patient)}")
 
     with open(patient + f"/{os.path.basename(patient)}_reg.pkl", "rb") as file:
         mytx = pickle.load(file)
@@ -89,10 +62,10 @@ for ct, vent, patient in zip(ct_nii, vent_nii, subdir_paths):
         print(f"warped_vent has value {
               warped_vent} and type {type(warped_vent)}")
         print(e)
-        break
+        
     try:
         print(type(warped_vent))
-        filename = f"{patient}/{os.path.basename(patient)}_warped_vent.nii"
+        filename = f"{patient}/{os.path.basename(patient)}_warped_{os.path.basename(vent)}"
         ants.image_write(image=warped_vent, filename=filename)
     except AttributeError as e:
         print(warped_vent)
