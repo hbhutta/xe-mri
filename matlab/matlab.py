@@ -1,11 +1,8 @@
-from oct2py import octave 
+from oct2py import octave
 octave.addpath("matlab")
+input_dir = "imgs/PIm0216"
+file_pattern = "mask_reg_edited.nii"
+octave.feval("matlab/resize_nifti", input_dir, file_pattern)
 
-"""
-Resizes nifti files in dir
-"""
-def resize(dir: str, files: str) -> None:
-    octave.resize(dir, files)
-    
-def calculate_rbc_m_ratio(calibration_filename: str, calibration_filepath: str) -> None:
-   octave.calculate_rbc(calibration_filename, calibration_filepath)
+# def resize(input_dir: str, file_pattern: str) -> None:
+    # octave.resize(input_dir, file_pattern)

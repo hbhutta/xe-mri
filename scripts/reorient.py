@@ -1,6 +1,6 @@
-from scripts.utils import nib_save, set_qform
+from scripts.utils.utils import nib_save, set_qform
 import nibabel as nib
-from utils.enums import ReorientKey
+from scripts.utils.enums import ReorientKey
 
 def reorient(file: str, key: str) -> None:
     img = nib.load(file)
