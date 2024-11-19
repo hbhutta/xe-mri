@@ -6,11 +6,8 @@ from time import time
 
 def register(ct_filename: str, mri_filename: str, dir: str) -> None:
     patient_PIm_ID = os.path.basename(dir[:-1])
-    print(patient_PIm_ID)
     reg_filename = f"{dir}{patient_PIm_ID}_reg.pkl"
-    print(reg_filename) 
-    print(os.path.exists(reg_filename))
-    return
+    
     if not os.path.exists(reg_filename):
         print(f"Creating {reg_filename} ...") # e.g. imgs/PIm0216/PIm0216_reg.pkl
         print(f"Performing CT-MRI registration...")

@@ -30,6 +30,7 @@ flags.DEFINE_string(name="dir", default=None, help="""
                     just for a single patient.
                     """, required=True)
 
+
 def process(dir: str) -> None:
     # Minimum set of files that must exist for any patient, with exactly these names
     original_files = get_files(dir=dir, files=[
@@ -64,16 +65,13 @@ def process(dir: str) -> None:
         "membrane2gas_scaled_mutated_affine.nii"
     ]
 
-    patient = dir[5:]
-
     ct_file, mr_file, gas, rbc, mem = [os.path.join(dir, fn) for fn in files]
-    files_before_resizing = [mr_file, gas, rbc, mem]
 
     # Assert files exist *after* reorienting and resizing
     for fn_path in [os.path.join(dir, fn) for fn in files]:
         if not os.path.exists(fn_path):
             raise Exception(f"""
-                  File {fn_path} does not exist for patient {patient}
+                  File {fn_path} does not exist for patient {dir[5:]}
                   but it is required for processing them in this pipeline.
                   """)
 
@@ -86,7 +84,7 @@ def process(dir: str) -> None:
 
     unzip(warped_mri_path)
 
-    for ven in vens:
+    for ven in [gas, rbc, mem]:
         warp_vent(ct=ct_file, dir=dir, vent=ven)
 
 
