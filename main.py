@@ -4,6 +4,7 @@ import os
 import glob
 
 from reorient import reorient
+from register import register
 
 FLAGS = flags.FLAGS
 
@@ -26,6 +27,7 @@ flags.DEFINE_string(name="dir", default=None, help="""
 
 def main(argv):
     dir = FLAGS.dir
+    print(dir)
     if has_sub_dirs(dir):
         print("Recieved a batch of directories, getting common files...")
         subdirs = get_subdirs(dir=dir)
@@ -35,6 +37,9 @@ def main(argv):
           "gas_highreso.nii"
         ]]
         reorient(ct_files, mr_files, ve_files)
+        
+        for ct, mr, patient in zip(ct_files, mr_files, subdirs):
+           register(ct, mr, patient) 
     else:
         print("Recieved a set of files for a single patient")
         ct_file, mr_file, ve_file = [glob.glob(os.path.join(dir, fn)) for fn in [
@@ -43,6 +48,7 @@ def main(argv):
           "gas_highreso.nii"
         ]]
         reorient(ct_file, mr_file, ve_file)
+        register(ct_filenme=ct_file, mri_filename=mr_file, patient=dir[5:])
 
 if __name__ == "__main__":
     app.run(main)

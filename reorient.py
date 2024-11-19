@@ -2,6 +2,12 @@ from utils import nib_save, set_qform
 import nibabel as nib
 
 def reorient(ct_file_paths: str | list , mr_file_paths: str | list, ve_file_paths: str | list) -> None:
+    
+    """
+    This accounts for the originally given directory 
+    being for a single patient
+    """
+    
     for paths in [ct_file_paths, mr_file_paths, ve_file_paths]:
         if type(paths) != list:
             paths = [paths]

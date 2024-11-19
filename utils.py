@@ -194,7 +194,7 @@ Returns the element-wise (Hadamard) product between the mask and the data
 
 def apply_mask(mask: np.memmap | np.ndarray, data: np.memmap | np.ndarray) -> np.memmap | np.ndarray:
     if mask.shape == data.shape:
-        log.info("Mask and data shapes match, applying mask...")
+        print("Mask and data shapes match, applying mask...")
         return np.multiply(mask, data)
     return None
 
