@@ -9,7 +9,7 @@ from scripts.warp_vent import warp_vent
 
 import os
 
-from scripts.resize import resize
+# from scripts.resize import resize
 
 from absl import app, flags
 
@@ -41,19 +41,20 @@ def process(patient_dir: str) -> None:
         "membrane2gas.nii"
     ])
 
-    for fn in original_files[1:]:  # Resize all files except for CT_mask.nii
-        print(patient_dir)
-        print(os.path.basename(fn))
-        resize(img_path=fn)
+    # for fn in original_files[1:]:  # Resize all files except for CT_mask.nii
+    #     print(patient_dir)
+    #     print(os.path.basename(fn))
+    #     resize(img_path=fn)
 
-    resized_files = get_files(dir=patient_dir, files=[
-        "mask_reg_edited_scaled.nii"
+    post_resize = get_files(dir=patient_dir, files=[
+        "CT_mask.nii",
+        "mask_reg_edited_scaled.nii",
         "gas_highreso_scaled.nii",
         "rbc2gas_scaled.nii",
         "membrane2gas_scaled.nii"
     ])
 
-    for fn in ["CT_mask.nii"] + resized_files:
+    for fn in post_resize:
         if "CT_mask" in fn:
             reorient(file=fn, key=ReorientKey.CT.value)
         else:
@@ -67,7 +68,8 @@ def process(patient_dir: str) -> None:
         "membrane2gas_scaled_mutated_affine.nii"
     ]
 
-    ct_file, mr_file, gas, rbc, mem = [os.path.join(patient_dir, fn) for fn in files]
+    ct_file, mr_file, gas, rbc, mem = [
+        os.path.join(patient_dir, fn) for fn in files]
 
     # Assert files exist *after* reorienting and resizing
     for fn_path in [os.path.join(patient_dir, fn) for fn in files]:
@@ -88,18 +90,17 @@ def process(patient_dir: str) -> None:
 
 
 def main(argv):
-    resize("")
-    dir = FLAGS.dir
-    print(dir)
-    if has_sub_dirs(dir):
+    dir_ = FLAGS.dir
+    print(dir_)
+    if has_sub_dirs(dir_):
         print("Recieved a batch directory of multiple patients.")
-        for subdir in get_subdirs(dir):
+        for subdir in get_subdirs(dir_):
             print(f"Processing patient {subdir[5:]}")
             process(patient_dir=subdir)
     else:
         print("Recieved a directory of single patient.")
-        print(f"Processing patient {dir[5:]}")
-        process(patient_dir=dir)
+        print(f"Processing patient {dir_[5:]}")
+        process(patient_dir=dir_)
 
 
 if __name__ == "__main__":

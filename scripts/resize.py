@@ -1,8 +1,9 @@
 from scipy.ndimage import zoom
+from scipy.misc import imresize
 import numpy as np
 from nibabel.nifti1 import Nifti1Image
 import nibabel as nib 
-
+import skimage.transform as skTrans
 
 """
 Scales the given image's data matrix
@@ -27,3 +28,11 @@ def resize(img_path: str) -> None:
     scaled_img = Nifti1Image(dataobj=contrast_adjusted_data, affine=img.affine) 
     nib.save(scaled_img, img_path[:-4] + "_scaled.nii")
 
+def foo(path):
+    im = nib.load(path)
+    data = im.get_fdata()
+    res = skTrans.resize(data, (512,512,368), order=1, preserve_range=True)
+    nib.save(Nifti1Image(dataobj=res, affine=im.affine), path[:-4] + "_scaled.nii")
+    
+foo("imgs/PIm0216/mask_reg_edited.nii")
+             

@@ -50,12 +50,12 @@ def warp_image(fixed, moving, transform_list, interpolation='linear'):
 
 def warp_vent(ct: str, dir: str, vent: str) -> None:
 
-    patient_PIm_ID = os.path.basename(dir[:-1])
+    patient_PIm_ID = os.path.basename(dir)
     print(patient_PIm_ID)
 
     print(f"ct {ct} | vent {vent} | patient {patient_PIm_ID}")
 
-    reg_filename = f"{dir}{patient_PIm_ID}_reg.pkl"
+    reg_filename = f"{dir}/{patient_PIm_ID}_reg.pkl"
 
     with open(reg_filename, "rb") as file:
         mytx = pickle.load(file)
