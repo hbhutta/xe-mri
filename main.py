@@ -3,11 +3,11 @@ from utils.utils import *
 from utils.enums import ReorientKey, Direction
 
 import nibabel as nib
-from scripts.reorient import reorient
-from scripts.register import register
-from scripts.unpack import unpack
-from scripts.unzip import unzip
-from scripts.warp_vent import warp_vent
+# from scripts.reorient import reorient
+# from scripts.register import register
+# from scripts.unpack import unpack
+# from scripts.unzip import unzip
+# from scripts.warp_vent import warp_vent
 
 import os
 
@@ -33,7 +33,7 @@ flags.DEFINE_string(name="dir", default=None, help="""
                     just for a single patient.
                     """, required=True)
 
-
+'''
 def process(patient_dir: str) -> None:
     # Minimum set of files that must exist for any patient, with exactly these names
     original_files = get_files(dir=patient_dir, files=[
@@ -94,7 +94,7 @@ def process(patient_dir: str) -> None:
     for ven in [gas, rbc, mem]:
         warp_vent(ct=ct_file, dir=patient_dir, vent=ven)
 
-
+'''
           
 
 

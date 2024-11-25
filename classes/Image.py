@@ -13,6 +13,12 @@ class Image():
     def __init__(self, filename: str):
         self.img = nib.load(filename=filename)
 
+    def get_sform_code(self) -> None:
+        return self.img.header['sform_code']
+
+    def set_sform_code(self, sform_code: int):
+        self.img.header['sform_code'] = sform_code
+
     def get_qform_code(self) -> None:
         return self.img.header['qform_code']
 
@@ -22,20 +28,32 @@ class Image():
     def align(self, reference: Self):
         '''
         Make sure that sform_code and qform_code match
-       
 
-        If reference uses the sform affine, 
+
+        If reference uses the sform affine,
         self should also use the sform affine,
         otherwise self should use the qform affine
-        
+
         Reference: https://nipy.org/nibabel/nifti_images.html#choosing-the-image-affine
         '''
         self.img.set_qform(reference.img.affine)
+
+        print(f"Old qform: {self.get_qform_code()}")
+        print(f"Old sform: {self.get_sform_code()}")
+
         if (self.get_qform_code() != reference.get_qform_code()):
             self.set_qform_code(reference.get_qform_code())
 
+        if (self.get_sform_code() != reference.get_sform_code()):
+            self.set_sform_code(reference.get_qform_code())
+
+        print(f"New qform: {self.get_qform_code()}")
+        print(f"New sform: {self.get_sform_code()}")
         assert np.any((self.img.get_qform(), reference.img.get_qform()))
+        assert np.any((self.img.get_sform(), reference.img.get_sform()))
+
         assert self.get_qform_code() == reference.get_qform_code()
+        assert self.get_sform_code() == reference.get_sform_code()
 
     def flip(self, direction: Direction):
         self.img.affine[:, [direction.value]] *= -1
@@ -52,10 +70,11 @@ class Image():
             except AssertionError as e:
                 print("Mismatch!")
                 print(f"Key: {key} \nValue type: {type(self.img.header[key])}")
-                print(f"Value in {self.img.get_filename()}: {self.img.header[key]}\nValue in {other.img.get_filename()}: {other.img.header[key]}\n")
+                print(f"Value in {self.img.get_filename()}: {self.img.header[key]}\nValue in {
+                      other.img.get_filename()}: {other.img.header[key]}\n")
 
     def axcodes(self) -> tuple:
-        return aff2axcodes(aff=self.img.affine, labels=(('R', 'L'), ('A', 'S'), ('S', 'I')))
+        return aff2axcodes(aff=self.img.affine, labels=(('R', 'L'), ('A', 'P'), ('S', 'I')))
 
     def save(self, filename: str) -> None:
         nib.save(img=self.img, filename=filename)
