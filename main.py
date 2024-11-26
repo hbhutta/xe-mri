@@ -95,19 +95,45 @@ def process(patient_dir: str) -> None:
         warp_vent(ct=ct_file, dir=patient_dir, vent=ven)
 
 '''
-          
+     
+def align(img: Image, ref: Image) -> None:
+    ref_qform_code = ref.get_qform_code()
+    ref_sform_code = ref.get_sform_code()
+    pass
 
 
 def main(argv):
-    ct_img = Image(filename="imgs/PIm0216/CT.nii")
-    ct_mask = Image(filename="imgs/PIm0216/CT_mask.nii")
+    ref = Image(filename="imgs/PIm0216/CT.nii")
+    img = Image(filename="imgs/PIm0216/CT_mask.nii")
+
+    # 1. Check if ref is using sform or qform
+    print(ref.get_qform_code()) # 1
+    print(ref.get_sform_code()) # 0
+    
+    print(img.get_qform_code()) # 0
+    print(img.get_sform_code()) # 0
+
+    print(img.is_matched_by_qform(ref))    
+    print(img.is_matched_by_sform(ref))    
+
+
+    print(img.get_qform())
+    print(img.get_sform())
+    print(ref.get_qform())
+    print(ref.get_sform())
+    
+    print(img.get_origin())
+    print(ref.get_origin())
+
+#    img.set_qform(qform = ref.get_qform())
+    
+    
+    
+    
 
     
-    ct_mask.align(reference=ct_img)
-    ct_mask.flip(direction=Direction.Z)
-    
-   
-    ct_mask.save(filename=ct_mask.img.get_filename()[:-4] + "_aligned_new.nii")
+
+    #img.save(filename=img.get_filename()[:-4] + "_aligned_new.nii")
     # dir_ = FLAGS.dir
     # print(dir_)
     # if has_sub_dirs(dir_):
