@@ -1,6 +1,7 @@
 
 # Ignore anything following these patterns
 imgs
+*.nii
 imgs_*
 lib
 lib64
