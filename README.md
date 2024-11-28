@@ -22,3 +22,6 @@ python main.py --help
 In the current design `utils.py` has many unrelated functions put together in one file. `utils.py` should not just be a dump of various utility functions, these functions should at least be related somehow. 
 
 `utils.py` can be made more organized by making a separate subclass of `nib.nifti1.Nifti1Image` and then making any NIFTI related functions class methods of this subclass. This would also be object-oriented.
+
+# Docker
+testing123
