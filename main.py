@@ -2,6 +2,9 @@ from absl import app, flags
 
 from classes.Image import NII
 from utils.utils import *
+from utils.enums import CODE
+
+from nibabel.nifti1 import Nifti1Image
 
 # from scripts.reorient import reorient
 # from scripts.register import register
@@ -43,44 +46,69 @@ def process(patient_dir: str) -> None:
 
     ct_img = NII(filename=original_files[0])
     ct_mask = NII(filename=original_files[1])
+    ct_img_copy = NII(filename=original_files[0])
+    img = nib.load("imgs_copy_new/PIm0216/CT.nii")
+    flip_ct_or_mri(img, type=True)
+    nib.save(img,  "imgs_copy_new/PIm0216/CT_testing123.nii")
+    assert 0 == 1
     
-    print(ct_img.get_affine())
-    print(ct_mask.get_affine())
+    
+    hdr = ct_img_copy.get_header()
+    hdr['sform_code'] = 1
+    hdr['qform_code'] = 1
+    ct_img_copy._NII__save_header(hdr)
+    ct_img_copy.save("imgs_copy_new/PIm0216/CT_testing123.nii")
+    assert 0 == 1
+    print(hdr)
+#    assert 0 == 1
+    affine = hdr.get_qform() 
+    dataobj = ct_img.get_fdata()
+    nii_img = Nifti1Image(dataobj=dataobj, affine=affine, header=hdr)
+    nib.save(nii_img, "imgs_copy_new/PIm0216/CT_testing123.nii")
+    assert 0 == 1
+    print("original")
+    print(ct_img.get_qform())
+    print(ct_img.get_sform())
+#    print(ct_mask.get_qform())
+#    print(ct_mask.get_sform())
+    print(ct_img.get_sform_code())
+    print(ct_img.get_qform_code())
+    ct_img.toRAS()
+    print(ct_img.get_qform())
+    print(ct_img.get_sform())
+    assert 0 == 1
+    ct_img.save(ct_img.get_filename()[:-4] + "_dummy.nii") 
+    ct_mask.save(ct_mask.get_filename()[:-4] + "_dummy.nii") 
 
+    assert 0 == 1 
     for img in [ct_img, ct_mask]:
         logger.info(f"Detected {str(img.get_axcodes())} axcodes for NIFTI image {img.get_filename()}")
 
     if (ct_img.get_axcodes() != tuple("RAS") and ct_mask.get_axcodes() != tuple("RAS")):
         for img in [ct_img, ct_mask]:
-            if not img.get_sform_code():
+            if img.get_sform_code() != CODE.SCANNER.value:
                 logger.info(f"{img.get_filename()} has sform_code = {img.get_sform_code()}. Setting to 1 (scanner).")
-                img.set_sform_code(1)                
+                img.set_sform_code(CODE.ALIGNED)    
+                img.set_sform_code(CODE.SCANNER)    
+                print(f"new code: {img.get_sform_code()}")           
+                
+        
                 
         ct_img.toRAS()
         ct_mask.toRAS()
+        ct_mask.translate(z=ct_img.get_origin()[2])
         
+       
         ct_img.save(ct_img.get_filename()[:-4] + "_RAS.nii")
         ct_mask.save(ct_mask.get_filename()[:-4] + "_RAS.nii")
         
+        assert 0 == 1
         print(ct_img.get_affine())
         print(ct_mask.get_affine()) 
         
         print(ct_img.get_axcodes())
         print(ct_mask.get_axcodes())
 
-        # Ensure that the reference and mask both have pixdim[0] != 0
-#        if not img.get_qfac():
-#            logger.info(
-#                f"{img.get_filename()} has pixdim[0] = 0. Setting to 1 (scanner).")
-#      #      img.set_qfac(1)
-#      
-#      
-#
-#        # Ensure that the srow matrix will be used by setting the sform_code to 1
-#        if (img.get_sform_code() == 0):
-#            logger.info(
-#                f"{img.get_filename()} has sform_code = 0. Setting to 1 (scanner).")
-      #      img.set_sform_code(1)
     elif (ct_img.get_axcodes() == tuple("RAS") and ct_mask.get_axcodes() == tuple("RAS")):
         """In the case where both the reference and the mask are in RAS, 
         is sufficient to translate the mask to match the origin of the reference"""
