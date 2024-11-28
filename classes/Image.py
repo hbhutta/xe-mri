@@ -7,6 +7,7 @@ from nibabel.nifti1 import Nifti1Image, Nifti1Header
 import numpy as np
 import os
 from logger import logger
+from utils.enums import CODE, SFORM_CODE
 
 
 class NII():
@@ -100,7 +101,7 @@ class NII():
         self.__save_header(hdr)
         logger.info(f"Origin of {self.get_filename()} after translation: {self.get_origin()}")
 
-    def set_quaterns(self, quatern_b: float | None = None, quatern_c: float | None = None, quatern_d: float | None = None) -> None:
+    def set_quaterns(self, quatern_b: float | None = 0.0, quatern_c: float | None = 0.0, quatern_d: float | None = 0.0) -> None:
         hdr = self.get_header()
 
         if not quatern_b:
@@ -121,8 +122,7 @@ class NII():
     """
 
     def __save_header(self, hdr: Nifti1Header, verbose: bool | None = False) -> None:
-        self.__img = Nifti1Image(dataobj=self.get_fdata(
-        ), affine=self.get_affine(), header=hdr)
+        self.__img = Nifti1Image(dataobj=self.get_fdata(), affine=self.get_affine(), header=hdr)
         
         if (verbose):
             logger.info(f"Updated header of {self.get_filename()}")
@@ -136,24 +136,38 @@ class NII():
     def get_qfac(self) -> str:
         return self.get_header()['pixdim'][0]
 
-    def get_sform_code(self) -> None:
-        return self.get_header()['sform_code']
-
-    def set_sform_code(self, sform: int):
+    def get_sform_code(self) -> int:
         hdr = self.get_header()
-        hdr['sform_code'] = sform
+        _, sform_code = hdr.get_sform()
+        return sform_code
+
+    def get_qform_code(self) -> int:
+        hdr = self.get_header()
+        _, qform_code = hdr.get_qform()
+        return qform_code
+
+    def set_sform_code(self, sform_code: CODE):
+        hdr = self.get_header()
+        hdr.set_sform(self.get_sform(), code=sform_code.value)
+#        hdr['sform_code'] = sform
         self.__save_header(hdr, verbose=True)
 
-    def set_qform_code(self, qform: int):
+    def set_qform_code(self, qform_code: CODE):
         hdr = self.get_header()
-        hdr['qform_code'] = qform
+        hdr.set_qform(self.get_qform(), code=qform_code.value)
+#        hdr['qform_code'] = qform
         self.__save_header(hdr, verbose=True)
 
-    def get_qform_code(self) -> None:
-        return self.get_header()['qform_code']
+
+    def get_sform(self) -> np.array:
+        hdr = self.get_header()
+        qform, _ = hdr.get_qform(coded=True)
+        return qform
 
     def get_qform(self) -> np.array:
-        return np.array(self.__img.header.get_qform())
+        hdr = self.get_header()
+        qform, _ = hdr.get_qform(coded=True)
+        return qform
 
     def set_srow_matrix(self, srow_matrix: np.ndarray):
         hdr = self.get_header()
