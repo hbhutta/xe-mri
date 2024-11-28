@@ -57,32 +57,30 @@ def process(patient_dir: str) -> None:
     ct_img = NII(filename=original_files[0])
     ct_mask = NII(filename=original_files[1])
 
-    if not (ct_img.get_axcodes() == tuple("RAS") and ct_mask.get_axcodes() == tuple("RAS")):
-        for img in [ct_img, ct_mask]:
-            logging.info(f"Detected {img.get_axcodes()} axcodes for NIFTI image {img.get_filename()}")
-            # Ensure that the reference and mask both have pixdim[0] != 0
-            if not img.get_qfac():
-                logging.info(
-                    f"{img.get_filename()} has pixdim[0] = 0. Setting to 1 (scanner).")
-                img.set_qfac(1)
+    for img in [ct_img, ct_mask]:
+        logging.info(f"Detected {img.get_axcodes()} axcodes for NIFTI image {img.get_filename()}")
 
-            # Ensure that the srow matrix will be used by setting the sform_code to 1
-            if (img.get_sform_code() == 0):
-                logging.info(
-                    f"{img.get_filename()} has sform_code = 0. Setting to 1 (scanner).")
-                img.set_sform_code(1)
+    if (ct_img.get_axcodes() != tuple("RAS") and ct_mask.get_axcodes() != tuple("RAS")):
+                # Ensure that the reference and mask both have pixdim[0] != 0
+        if not img.get_qfac():
+            logging.info(
+                f"{img.get_filename()} has pixdim[0] = 0. Setting to 1 (scanner).")
+      #      img.set_qfac(1)
 
-        x, y, z = ct_img.get_origin()
-        ct_mask.translate(-x, -y, -z)
-    else:
-        for img in [ct_img, ct_mask]:
-            logging.info(f"Detected {img.get_axcodes()} axcodes for NIFTI image {img.get_filename()}")
-
+        # Ensure that the srow matrix will be used by setting the sform_code to 1
+        if (img.get_sform_code() == 0):
+            logging.info(
+                f"{img.get_filename()} has sform_code = 0. Setting to 1 (scanner).")
+      #      img.set_sform_code(1)
+    elif (ct_img.get_axcodes() == tuple("RAS") and ct_mask.get_axcodes() == tuple("RAS")):
         """In the case where both the reference and the mask are in RAS, 
         is sufficient to translate the mask to match the origin of the reference"""
         x, y, z = ct_img.get_origin()
         ct_mask.translate(-x, -y, -z)
         ct_mask.save()
+        logging.info(f"Image {ct_mask.get_filename()} saved!")
+        
+        assert ct_img.get_origin() == ct_mask.get_origin()
 
     # for fn in original_files[1:]:  # Resize all files except for CT_mask.nii
     #     print(patient_dir)

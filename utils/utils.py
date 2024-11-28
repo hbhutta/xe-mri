@@ -191,18 +191,6 @@ def apply_mask(mask: np.memmap | np.ndarray, data: np.memmap | np.ndarray) -> np
 
 
 """
-Returns true if the given directory has any subdirectories
-Used for distinguishing between a node directory and a parent directory.
-A node directory is one that has no subdirectories.
-A parent directory is one that has at least another level of subdirectories.
-"""
-
-
-def contains_subdirs(dir: str) -> bool:
-    return len(set([os.path.dirname(p) for p in glob.glob(dir + "/*/*")])) == True
-
-
-"""
 Get file paths in dir from list of files and path to dir
 """
 
