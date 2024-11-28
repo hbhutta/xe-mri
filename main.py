@@ -43,21 +43,43 @@ def process(patient_dir: str) -> None:
 
     ct_img = NII(filename=original_files[0])
     ct_mask = NII(filename=original_files[1])
+    
+    print(ct_img.get_affine())
+    print(ct_mask.get_affine())
 
     for img in [ct_img, ct_mask]:
         logger.info(f"Detected {str(img.get_axcodes())} axcodes for NIFTI image {img.get_filename()}")
 
     if (ct_img.get_axcodes() != tuple("RAS") and ct_mask.get_axcodes() != tuple("RAS")):
-        # Ensure that the reference and mask both have pixdim[0] != 0
-        if not img.get_qfac():
-            logger.info(
-                f"{img.get_filename()} has pixdim[0] = 0. Setting to 1 (scanner).")
-      #      img.set_qfac(1)
+        for img in [ct_img, ct_mask]:
+            if not img.get_sform_code():
+                logger.info(f"{img.get_filename()} has sform_code = {img.get_sform_code()}. Setting to 1 (scanner).")
+                img.set_sform_code(1)                
+                
+        ct_img.toRAS()
+        ct_mask.toRAS()
+        
+        ct_img.save(ct_img.get_filename()[:-4] + "_RAS.nii")
+        ct_mask.save(ct_mask.get_filename()[:-4] + "_RAS.nii")
+        
+        print(ct_img.get_affine())
+        print(ct_mask.get_affine()) 
+        
+        print(ct_img.get_axcodes())
+        print(ct_mask.get_axcodes())
 
-        # Ensure that the srow matrix will be used by setting the sform_code to 1
-        if (img.get_sform_code() == 0):
-            logger.info(
-                f"{img.get_filename()} has sform_code = 0. Setting to 1 (scanner).")
+        # Ensure that the reference and mask both have pixdim[0] != 0
+#        if not img.get_qfac():
+#            logger.info(
+#                f"{img.get_filename()} has pixdim[0] = 0. Setting to 1 (scanner).")
+#      #      img.set_qfac(1)
+#      
+#      
+#
+#        # Ensure that the srow matrix will be used by setting the sform_code to 1
+#        if (img.get_sform_code() == 0):
+#            logger.info(
+#                f"{img.get_filename()} has sform_code = 0. Setting to 1 (scanner).")
       #      img.set_sform_code(1)
     elif (ct_img.get_axcodes() == tuple("RAS") and ct_mask.get_axcodes() == tuple("RAS")):
         """In the case where both the reference and the mask are in RAS, 

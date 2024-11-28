@@ -46,12 +46,19 @@ class NII():
 
     Everytime the header is changed, the image private attribute 
     should be updated
+    
+    Should use best_affine() on new header 
+    if we do self.__img.header.get_best_affine(),
+    this would use the best affine from 
+    the header of the old image, while the best 
+    affine in the header of the new image may be different.
 
     References: 
     1. https://stackoverflow.com/questions/47996388/python-boolean-methods-naming-convention
     2. https://nipy.org/nibabel/nibabel_images.html#loading-and-saving
     3. https://nipy.org/nibabel/coordinate_systems.html#the-affine-matrix-as-a-transformation-between-spaces
     4. https://nifti.nimh.nih.gov/pub/dist/src/niftilib/nifti1.h
+    5. https://nipy.org/nibabel/nifti_images.html#choosing-the-image-affine
     """
 
     def __init__(self, filename: str):
@@ -111,16 +118,17 @@ class NII():
         self.__save_header(hdr)
 
     """
-    Should use best_affine() on new header 
-    if we do self.__img.header.get_best_affine(),
-    this would use the best affine from 
-    the header of the old image, while the best 
-    affine in the header of the new image may be different.
     """
 
-    def __save_header(self, hdr: Nifti1Header) -> None:
+    def __save_header(self, hdr: Nifti1Header, verbose: bool | None = False) -> None:
         self.__img = Nifti1Image(dataobj=self.get_fdata(
-        ), affine=hdr.get_best_affine(), header=hdr)
+        ), affine=self.get_affine(), header=hdr)
+        
+        if (verbose):
+            logger.info(f"Updated header of {self.get_filename()}")
+            hdr = self.get_header()
+            using_sform = (hdr['sform_code'] != 0)
+            logger.info(f"Using %s ({hdr['sform_code']})" % {"sform_code" if using_sform else "qform_code"})
 
     def get_filename(self) -> str:
         return self.__filename
@@ -134,12 +142,12 @@ class NII():
     def set_sform_code(self, sform: int):
         hdr = self.get_header()
         hdr['sform_code'] = sform
-        self.__save_header(hdr)
+        self.__save_header(hdr, verbose=True)
 
     def set_qform_code(self, qform: int):
         hdr = self.get_header()
         hdr['qform_code'] = qform
-        self.__save_header(hdr)
+        self.__save_header(hdr, verbose=True)
 
     def get_qform_code(self) -> None:
         return self.get_header()['qform_code']
@@ -147,20 +155,21 @@ class NII():
     def get_qform(self) -> np.array:
         return np.array(self.__img.header.get_qform())
 
-    def set_qform(self, qform: np.ndarray):
-        self.get_header().set_qform(affine=qform)
-        # null_sform = np.array([
-        #     [0., 0., 0., 0.],
-        #     [0., 0., 0., 0.],
-        #     [0., 0., 0., 0.],
-        #     [0., 0., 0., 1.]])
-
-    def get_sform(self) -> np.array:
-        return np.array(self.__img.header.get_sform())
-
-    def set_sform(self, sform: np.ndarray):
-        self.__img.header.set_sform(affine=sform, code=None)
-
+    def set_srow_matrix(self, srow_matrix: np.ndarray):
+        hdr = self.get_header()
+        hdr['srow_x'] = srow_matrix[0]
+        hdr['srow_y'] = srow_matrix[1]
+        hdr['srow_z'] = srow_matrix[2]
+        self.__save_header(hdr, verbose=True)
+        
+    def __get_srow_matrix(self) -> np.array:
+        hdr = self.get_header()
+        return np.array([
+            hdr['srow_x'],
+            hdr['srow_y'],
+            hdr['srow_z']
+        ])
+    
     def get_origin(self) -> np.array:
         hdr = self.get_header()
         x = hdr['srow_x'][3]
@@ -174,6 +183,34 @@ class NII():
         dim_y = hdr['pixdim'][2]
         dim_z = hdr['pixdim'][3]
         return np.array([dim_x, dim_y, dim_z])
+    
+    def get_affine(self) -> np.array:
+        hdr = self.get_header()
+        return hdr.get_best_affine()
+    
+    def toRAS(self) -> None:
+        if not self.get_sform_code():
+            logger.info("No change occurred.")
+        else:
+            logger.info(f"Current orientation of {self.get_filename()}: {self.get_axcodes()}")
+            print(self.__get_srow_matrix())
+            logger.info("Reorienting to RAS...")
+            hdr = self.get_header()
+            if not hdr['srow_x'][0] < 0: 
+                hdr['srow_x'] = np.multiply(hdr['srow_x'], np.array([-1, 1, 1, 1]))  
+            if not hdr['srow_y'][0] < 0: 
+                hdr['srow_y'] = np.multiply(hdr['srow_y'], np.array([-1, -1, 1, 1]))  
+            if not hdr['srow_z'][0] < 0: 
+                hdr['srow_z'] = np.multiply(hdr['srow_z'], np.array([-1, 1, -1, 1]))  
+             
+          #  if not hdr['srow_x'][0] < 0: logger.info("Flipping x"); hdr['srow_x'][0] = 400
+          #  if not hdr['srow_y'][1] < 0: logger.info("Flipping y"); hdr['srow_y'][1] *= -1
+          #  if not hdr['srow_z'][2] < 0: logger.info("Flipping z"); hdr['srow_z'][2] *= -1
+            self.__save_header(hdr, verbose=True)
+            print(self.__get_srow_matrix())
+
+            logger.info(f"New orientation of {self.get_filename()}: {self.get_axcodes()}")
+
 
     def is_matched_by_sform(self, other: Self) -> bool:
         return np.all(self.get_sform() == other.get_sform())
@@ -188,7 +225,8 @@ class NII():
         return self.__img.get_fdata()
 
     def get_axcodes(self) -> tuple:
-        return aff2axcodes(aff=self.__img.affine, labels=(('R', 'L'), ('A', 'P'), ('S', 'I')))
+        return aff2axcodes(aff=self.get_affine(), labels=(('R', 'L'), ('A', 'P'), ('S', 'I')))
+#        return aff2axcodes(aff=self.__img.affine, labels=(('R', 'L'), ('A', 'P'), ('S', 'I')))
 
     def save(self, filename: str) -> None:
         if filename == self.get_filename():
