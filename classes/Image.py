@@ -132,13 +132,11 @@ class NII():
 
     def set_qform(self, qform: np.ndarray):
         self.get_header().set_qform(affine=qform)
-        null_sform = np.array([
-            [0., 0., 0., 0.],
-            [0., 0., 0., 0.],
-            [0., 0., 0., 0.],
-            [0., 0., 0., 1.]])
-        # self.get_header().set_sform(affine=None, code=0)
-#        self.info()
+        # null_sform = np.array([
+        #     [0., 0., 0., 0.],
+        #     [0., 0., 0., 0.],
+        #     [0., 0., 0., 0.],
+        #     [0., 0., 0., 1.]])
 
     def get_sform(self) -> np.array:
         return np.array(self.__img.header.get_sform())
@@ -172,9 +170,6 @@ class NII():
     def get_fdata(self) -> np.memmap | np.ndarray:
         return self.__img.get_fdata()
 
-#    def flip(self, direction: Direction):
-#        self.__img.affine[:, [direction.value]] *= -1
-
     def get_axcodes(self) -> tuple:
         return aff2axcodes(aff=self.__img.affine, labels=(('R', 'L'), ('A', 'P'), ('S', 'I')))
 
@@ -187,52 +182,3 @@ class NII():
             os.rename(src=copy_filename, dst=self.get_filename())
         else:
             nib.save(img=self.__img, filename=filename)
-
-    # def align(self, other: Self): # causes image size to be quadrupled for some reason
-    #     self.__img = Nifti1Image(self.get_fdata(), other.get_affine())
-
-
-#    def align(self, reference: Self):
-#        '''
-#        Make sure that sform_code and qform_code match
-#
-#
-#        If reference uses the sform affine,
-#        self should also use the sform affine,
-#        otherwise self should use the qform affine
-#
-#        Reference: https://nipy.org/nibabel/nifti_images.html#choosing-the-image-affine
-#        '''
-#        self.img.set_qform(reference.img.affine)
-#
-#        print(f"Old sform: {self.get_sform_code()}")
-#        print(f"Old qform: {self.get_qform_code()}")
-#
-#        if (self.get_qform_code() != reference.get_qform_code()):
-#            self.set_qform_code(reference.get_qform_code())
-#
-#        if (self.get_sform_code() != reference.get_sform_code()):
-#            self.set_sform_code(reference.get_qform_code())
-#
-#        print(f"New sform: {self.get_sform_code()}")
-#        print(f"New qform: {self.get_qform_code()}")
-#        assert np.any((self.img.get_qform(), reference.img.get_qform()))
-#        assert np.any((self.img.get_sform(), reference.img.get_sform()))
-#
-#        assert self.get_qform_code() == reference.get_qform_code()
-#        assert self.get_sform_code() == reference.get_sform_code()
-
-    # def check_alignment(self, other: Self) -> bool:
-    #     for key in self.__img.header.keys():
-    #         try:
-    #             if key in ['dim', 'pixdim', 'srow_x', 'srow_y', 'srow_z']:
-    #                 if not (np.any((self.__img.header[key], other.__img.header[key]))):
-    #                     raise AssertionError
-    #             else:
-    #                 if (self.__img.header[key] != other.__img.header[key]):
-    #                     raise AssertionError
-    #         except AssertionError as e:
-    #             print("Mismatch!")
-    #             print(f"Key: {key} \nValue type: {type(self.__img.header[key])}")
-    #             print(f"Value in {self.__img.get_filename()}: {self.__img.header[key]}\n \
-    #                     Value in {other.__img.get_filename()}: {other.__img.header[key]}\n")

@@ -1,32 +1,9 @@
 import os
 import glob
-
-from nibabel.fileholders import FileMap
-from nibabel.filebasedimages import FileBasedHeader, FileBasedImage
-from nibabel.orientations import aff2axcodes
-
 import numpy as np
-
 import nibabel as nib
+from nibabel.filebasedimages import FileBasedImage
 from nibabel.nifti1 import Nifti1Image
-
-
-class FileBasedImage_(FileBasedImage):
-    def __init__(self, header: FileBasedHeader | os.Mapping | None = None, extra: os.Mapping | None = None, file_map: os.Mapping[str, nib.FileHolder] | None = None):
-        super().__init__(header, extra, file_map)
-
-    
-    
-class NIFTI(Nifti1Image):
-    def __init__(self, dataobj, affine, header=None, extra=None, file_map=None, dtype=None):
-        super().__init__(dataobj, affine, header, extra, file_map, dtype)
-        self.dataobj = dataobj
-        self.affine = affine
-        
-    def get_qfac(self) -> int:
-        return self.header['pixdim'][0]
-    
-    
 
 
 """
@@ -61,11 +38,12 @@ def get_common_files(base_dir: str, filename: str | None) -> list[str]:
     return ret
 
 
-"""
-Using RAS coding instead of LPI coding to print axis codes
-"""
-
-
+def contains_subdir(dir_: str | os.PathLike) -> bool:
+    for item in os.listdir(dir_):
+        item_path = os.path.join(dir_, item)
+        if os.path.isdir(item_path):
+            return True
+    return False
 
 
 """
@@ -73,26 +51,18 @@ Return the paths to the subdirs of a given dir
 """
 
 
-def get_subdirs(dir: str) -> list[str]:
-    return [os.path.join(dir, subdir) for subdir in os.listdir(dir)]
+def get_subdirs(dir_: str | os.PathLike) -> list[str]:
+    return [os.path.join(dir_, subdir) for subdir in os.listdir(dir_)]
 
 
-"""
-Gets the affine matrix of the given image
-"""
 
-"""
-Sets the qform affine matrix of the given image;
-if type is true, then set affine for 'ct_lobe' otherwise set affine for 'mr_vent'
-"""
-
-def flip_ct_or_mri(img: FileBasedImage, type: bool) -> None:
+def flip_ct_or_mri(img, type: bool) -> None:
     aff = img.affine
-    if type: # CT
+    if type:  # CT
         for i in range(3):
             if (aff[i][i] > 0):  # The sign along the diagonal will not be flipped if it is already negative
                 aff[i][i] = -aff[i][i]
-    else: # MRI or gas
+    else:  # MRI or gas
         aff = np.array([[0, -1, 0, 0],
                         [0, 0, -1, 0],
                         [-1, 0, 0, 0],
@@ -106,8 +76,6 @@ Helper function that calls nib.save() but
 prints out more information such as:
 1. RAS orientation 
 """
-
-
 
 
 """
@@ -205,8 +173,10 @@ def split_mask(mask_image_file_path: str, return_imgs: bool | None) -> list[np.m
     print(f"Returning: {splits}")
     return splits
 
+
 def get_qfac(img: FileBasedImage) -> int:
-        return img.header['pixdim'][0]
+    return img.header['pixdim'][0]
+
 
 """
 Returns the element-wise (Hadamard) product between the mask and the data
@@ -228,12 +198,15 @@ A parent directory is one that has at least another level of subdirectories.
 """
 
 
-def has_sub_dirs(dir: str) -> bool:
+def contains_subdirs(dir: str) -> bool:
     return len(set([os.path.dirname(p) for p in glob.glob(dir + "/*/*")])) == True
+
 
 """
 Get file paths in dir from list of files and path to dir
 """
+
+
 def get_files(dir: str, files: list[str] | str) -> list[str] | str:
     if type(files) == str:
         return os.path.join(dir, files)
