@@ -23,5 +23,4 @@ In the current design `utils.py` has many unrelated functions put together in on
 
 `utils.py` can be made more organized by making a separate subclass of `nib.nifti1.Nifti1Image` and then making any NIFTI related functions class methods of this subclass. This would also be object-oriented.
 
-# Docker
-testing123
+
