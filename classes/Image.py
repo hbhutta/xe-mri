@@ -6,7 +6,7 @@ from nibabel.nifti1 import Nifti1Image, Nifti1Header
 
 import numpy as np
 import os
-from utils.enums import SFORM_CODE, QFORM_CODE
+from logger import logger
 
 
 class NII():
@@ -32,6 +32,17 @@ class NII():
     1. If sform_code != 0 (unknown) use the sform affine; else
     2. If qform_code != 0 (unknown) use the qform affine; else
     3. Use the fall-back affine.
+
+    Changing the origin in the srow matrix in the header
+    changes the origin but does not change the qoffset values
+
+    Changing the qoffset values does not change the origin
+    in the image information displayed in ITK-SNAP. It also
+    does not change the origin values as they appear in the 
+    srow matrix.
+
+    This means the srow matrix, and not the qoffset values,
+    should be directly manipulated to cause a translation
 
     Everytime the header is changed, the image private attribute 
     should be updated
@@ -62,19 +73,25 @@ class NII():
 
         self.__save_header(hdr)
 
-    def translate(self, x: float | None = 0.0, y: float | None = 0.0, z: float | None = 0.0) -> None:
+    def translate(self, x: float = 0.0, y: float = 0.0, z: float = 0.0) -> None:
         hdr = self.get_header()
 
-        if (self.get_sform_code() == 1 and self.get_qform_code() == 0):  # same as having RAS axcod
-            if not x:
-                hdr['srow_x'][3] += x
-            if not y:
-                hdr['srow_y'][3] += y
-            if not z:
-                hdr['srow_z'][3] += z
-        elif (self.get_sform_code() == 0 and self.get_qform_code() == 1):
+        logger.info(f"Origin of {self.get_filename()} before translation: {self.get_origin()}")
+        logger.info(f"Translating {self.get_filename()} by (x={x}, y={y}, z={z})")
+
+        # srow matrix is being used as affine (srow matrix visible in header)
+        if (self.get_sform_code() == 1):
+            logger.info(f"{self.get_filename()} has sform code: {self.get_sform_code()}")
+
+            hdr['srow_x'][3] += x
+            hdr['srow_y'][3] += y
+            hdr['srow_z'][3] += z
+
+        elif (self.get_sform_code() == 0):
             pass
+
         self.__save_header(hdr)
+        logger.info(f"Origin of {self.get_filename()} after translation: {self.get_origin()}")
 
     def set_quaterns(self, quatern_b: float | None = None, quatern_c: float | None = None, quatern_d: float | None = None) -> None:
         hdr = self.get_header()
@@ -146,9 +163,9 @@ class NII():
 
     def get_origin(self) -> np.array:
         hdr = self.get_header()
-        x = hdr['qoffset_x']
-        y = hdr['qoffset_y']
-        z = hdr['qoffset_z']
+        x = hdr['srow_x'][3]
+        y = hdr['srow_y'][3]
+        z = hdr['srow_z'][3]
         return np.array([x, y, z], dtype=np.float64)
 
     def get_dims(self) -> np.array:
