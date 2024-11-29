@@ -6,6 +6,8 @@ from utils.enums import CODE
 
 from nibabel.nifti1 import Nifti1Image
 
+import subprocess
+
 # from scripts.reorient import reorient
 # from scripts.register import register
 # from scripts.unpack import unpack
@@ -35,93 +37,42 @@ flags.DEFINE_string(name="dir", default=None, help="""
 def process(patient_dir: str) -> None:
     # Minimum set of files that must exist for any patient, with exactly these names
 
-    original_files = get_files(dir=patient_dir, files=[
-        "CT.nii",
-        "CT_mask.nii",
-        "mask_reg_edited.nii",
-        "gas_highreso.nii",
-        "rbc2gas.nii",
-        "membrane2gas.nii"
-    ])
+    # original_files = get_files(dir=patient_dir, files=[
+    #     "CT.nii",
+    #     "CT_mask.nii",
+    #     "mask_reg_edited.nii",
+    #     "gas_highreso.nii",
+    #     "rbc2gas.nii",
+    #     "membrane2gas.nii"
+    # ])
 
-    ct_img = NII(filename=original_files[0])
-    ct_mask = NII(filename=original_files[1])
-    ct_img_copy = NII(filename=original_files[0])
-    img = nib.load("imgs_copy_new/PIm0216/CT.nii")
-    flip_ct_or_mri(img, type=True)
-    nib.save(img,  "imgs_copy_new/PIm0216/CT_testing123.nii")
-    assert 0 == 1
-    
-    
-    hdr = ct_img_copy.get_header()
-    hdr['sform_code'] = 1
-    hdr['qform_code'] = 1
-    ct_img_copy._NII__save_header(hdr)
-    ct_img_copy.save("imgs_copy_new/PIm0216/CT_testing123.nii")
-    assert 0 == 1
-    print(hdr)
-#    assert 0 == 1
-    affine = hdr.get_qform() 
-    dataobj = ct_img.get_fdata()
-    nii_img = Nifti1Image(dataobj=dataobj, affine=affine, header=hdr)
-    nib.save(nii_img, "imgs_copy_new/PIm0216/CT_testing123.nii")
-    assert 0 == 1
-    print("original")
-    print(ct_img.get_qform())
-    print(ct_img.get_sform())
-#    print(ct_mask.get_qform())
-#    print(ct_mask.get_sform())
-    print(ct_img.get_sform_code())
-    print(ct_img.get_qform_code())
-    ct_img.toRAS()
-    print(ct_img.get_qform())
-    print(ct_img.get_sform())
-    assert 0 == 1
-    ct_img.save(ct_img.get_filename()[:-4] + "_dummy.nii") 
-    ct_mask.save(ct_mask.get_filename()[:-4] + "_dummy.nii") 
-
-    assert 0 == 1 
+    ct_img = NII(filename=get_files(dir=patient_dir, files="CT.nii"))
+    ct_mask = NII(filename=get_files(dir=patient_dir, files="CT_mask.nii"))
+        
     for img in [ct_img, ct_mask]:
         logger.info(f"Detected {str(img.get_axcodes())} axcodes for NIFTI image {img.get_filename()}")
+        try:
+            assert img.get_sform_code() == 1 and img.get_qform_code() == 1
+        except AssertionError as e:
+            # Run modify_xform.sh with the file as the argument
+            out = subprocess.run(["sh", "scripts/modify_xform.sh"])
+            if out.returncode == 0:
+                logger.info(f"{img.get_filename()} s/qform code changed.")
+        
+    
 
-    if (ct_img.get_axcodes() != tuple("RAS") and ct_mask.get_axcodes() != tuple("RAS")):
-        for img in [ct_img, ct_mask]:
-            if img.get_sform_code() != CODE.SCANNER.value:
-                logger.info(f"{img.get_filename()} has sform_code = {img.get_sform_code()}. Setting to 1 (scanner).")
-                img.set_sform_code(CODE.ALIGNED)    
-                img.set_sform_code(CODE.SCANNER)    
-                print(f"new code: {img.get_sform_code()}")           
-                
-        
-                
-        ct_img.toRAS()
-        ct_mask.toRAS()
-        ct_mask.translate(z=ct_img.get_origin()[2])
-        
-       
-        ct_img.save(ct_img.get_filename()[:-4] + "_RAS.nii")
-        ct_mask.save(ct_mask.get_filename()[:-4] + "_RAS.nii")
-        
-        assert 0 == 1
-        print(ct_img.get_affine())
-        print(ct_mask.get_affine()) 
-        
-        print(ct_img.get_axcodes())
-        print(ct_mask.get_axcodes())
-
-    elif (ct_img.get_axcodes() == tuple("RAS") and ct_mask.get_axcodes() == tuple("RAS")):
+    if (ct_img.get_axcodes() == tuple("RAS") and ct_mask.get_axcodes() == tuple("RAS")):
         """In the case where both the reference and the mask are in RAS, 
         is sufficient to translate the mask to match the origin of the reference"""
         x, y, z = ct_img.get_origin()
         ct_mask.translate(x, y, z)
         try: 
-            #assert ct_mask.is_matched_by_origin(ct_img)
+            assert ct_mask.is_matched_by_origin(ct_img)
             ct_mask.save(ct_mask.get_filename()[:-4] + "_translated.nii")
             logger.info(f"Image {ct_mask.get_filename()} saved!")
         except AssertionError as e:
             logger.info(f"Unable to match origin of {ct_mask.get_filename()} to origin of {ct_img.get_filename()}!")
 
-            
         
 
     # for fn in original_files[1:]:  # Resize all files except for CT_mask.nii
