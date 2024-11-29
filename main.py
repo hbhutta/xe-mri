@@ -56,7 +56,6 @@ def process(patient_dir: str) -> None:
             img_ = NII(filename=img.get_filename()) # Reload/reread image (the filename will not have changed)
             logger.info(f"New sform_code of {img.get_filename()}: {img_.get_sform_code()}")
 
-
         ax = ''.join(img.get_axcodes())
         logger.info(f"File {img.get_filename()} currently has RAS orientation: {ax}")
         if ax != "RAS":
@@ -66,7 +65,7 @@ def process(patient_dir: str) -> None:
         
     logger.info(f"xform codes and orientation fixed, aligning CT image to mask...")
     x, y, z = ct_img.get_origin()
-    img.translate(x, y, z)
+    ct_mask.translate(x, y, z)
     
     try: 
         assert ct_mask.is_matched_by_origin(ct_img)
