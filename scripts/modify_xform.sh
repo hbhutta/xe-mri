@@ -39,9 +39,12 @@ while getopts ${OPTSTRING} opt; do
 done
 
 if [[ -n "$sflag" ]]; then
-    nifti_tool -mod_hdr -mod_field sform_code "$sflag" -infiles "$fflag"
+    # Modify sform_code and overwrite file
+    nifti_tool -mod_hdr -mod_field sform_code "$sflag" -infiles "$fflag" -prefix "$fflag"
+
 fi
 
 if [[ -n "$qflag" ]]; then
-    nifti_tool -mod_hdr -mod_field qform_code "$qflag" -infiles "$fflag"
+    # Modify qform_code and overwrite file
+    nifti_tool -mod_hdr -mod_field qform_code "$qflag" -infiles "$fflag" -prefix "$fflag"
 fi

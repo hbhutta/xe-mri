@@ -35,43 +35,46 @@ flags.DEFINE_string(name="dir", default=None, help="""
 
 
 def process(patient_dir: str) -> None:
-    # Minimum set of files that must exist for any patient, with exactly these names
-
-    # original_files = get_files(dir=patient_dir, files=[
-    #     "CT.nii",
-    #     "CT_mask.nii",
-    #     "mask_reg_edited.nii",
-    #     "gas_highreso.nii",
-    #     "rbc2gas.nii",
-    #     "membrane2gas.nii"
-    # ])
-
     ct_img = NII(filename=get_files(dir=patient_dir, files="CT.nii"))
     ct_mask = NII(filename=get_files(dir=patient_dir, files="CT_mask.nii"))
         
     for img in [ct_img, ct_mask]:
-        logger.info(f"Detected {str(img.get_axcodes())} axcodes for NIFTI image {img.get_filename()}")
-        try:
-            assert img.get_sform_code() == 1 and img.get_qform_code() == 1
-        except AssertionError as e:
-            # Run modify_xform.sh with the file as the argument
-            out = subprocess.run(["sh", "scripts/modify_xform.sh"])
-            if out.returncode == 0:
-                logger.info(f"{img.get_filename()} s/qform code changed.")
-        
-    
+        logger.info(f"Checking xform codes for {img.get_filename()}")
+        out = None
+        if img.get_sform_code() == 0 and img.get_qform_code() == 0:
+            out = subprocess.run(["sh", "scripts/modify_xform.sh", "-s", "1", "-q", "1", "-f", f"{img.get_filename()}"])
+        elif img.get_sform_code() == 1 and img.get_qform_code() == 0:
+            out = subprocess.run(["sh", "scripts/modify_xform.sh", "-q", "1", "-f", f"{img.get_filename()}"])
+        elif img.get_sform_code() == 0 and img.get_qform_code() == 1:
+            out = subprocess.run(["sh", "scripts/modify_xform.sh", "-s", "1", "-f", f"{img.get_filename()}"])
+        elif img.get_sform_code() == 1 and img.get_qform_code() == 1:
+            logger.info(f"File {img.get_filename()} already has sform_code = 1 and qform_code = 1")
 
-    if (ct_img.get_axcodes() == tuple("RAS") and ct_mask.get_axcodes() == tuple("RAS")):
-        """In the case where both the reference and the mask are in RAS, 
-        is sufficient to translate the mask to match the origin of the reference"""
-        x, y, z = ct_img.get_origin()
-        ct_mask.translate(x, y, z)
-        try: 
-            assert ct_mask.is_matched_by_origin(ct_img)
-            ct_mask.save(ct_mask.get_filename()[:-4] + "_translated.nii")
-            logger.info(f"Image {ct_mask.get_filename()} saved!")
-        except AssertionError as e:
-            logger.info(f"Unable to match origin of {ct_mask.get_filename()} to origin of {ct_img.get_filename()}!")
+        # out = None in the case that xfrom codes were not modified        
+        if out != None and out.returncode == 0:
+            logger.info(f"{img.get_filename()} sform code and qform changed.")
+            img_ = NII(filename=img.get_filename()) # Reload/reread image (the filename will not have changed)
+            logger.info(f"New sform_code of {img.get_filename()}: {img_.get_sform_code()}")
+
+
+        ax = ''.join(img.get_axcodes())
+        logger.info(f"File {img.get_filename()} currently has RAS orientation: {ax}")
+        if ax != "RAS":
+            img.toRAS()
+        else:
+            logger.info(f"File {img.get_filename()} in proper orientation (RAS). Leaving unchanged...") 
+        
+    logger.info(f"xform codes and orientation fixed, aligning CT image to mask...")
+    x, y, z = ct_img.get_origin()
+    img.translate(x, y, z)
+    
+    try: 
+        assert ct_mask.is_matched_by_origin(ct_img)
+        ct_mask.save(ct_mask.get_filename()[:-4] + "_translated.nii")
+        logger.info(f"Image {ct_mask.get_filename()} saved!")
+    except AssertionError as e:
+        logger.info(f"Unable to match origin of {ct_mask.get_filename()} to origin of {ct_img.get_filename()}!")
+        return
 
         
 
