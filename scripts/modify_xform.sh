@@ -16,6 +16,9 @@ sflag=
 pflag=
 fflag=
 
+
+
+
 # getopts usage: getopts optstring name [args]
 OPTSTRING="s:q:f:h" # s, q, and f require arguments, but not h
 while getopts ${OPTSTRING} opt; do
