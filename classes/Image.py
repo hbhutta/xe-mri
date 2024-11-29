@@ -181,58 +181,20 @@ class NII():
     
     def set_sform(self, sform) -> None:
         hdr = self.get_header()
-#        print(self.get_sform_code())
         hdr.set_sform(affine=sform)
         self.__save_header(hdr, verbose=True)
         
     def set_qform(self, qform) -> None:
         hdr = self.get_header()
-#        print(self.get_qform_code())
         hdr.set_qform(affine=qform)
         self.__save_header(hdr, verbose=True)
-
-    
-
     
     def toRAS(self) -> None:
-        if self.get_sform_code() == 0 and self.get_qform_code() == 0:
-            logger.info("Both sform_code and qform_code are unknown.")
-        elif self.get_sform_code() == 1 and self.get_qform_code() == 0:
-            logger.info(f"Detected sform_code of 1 for {self.get_filename()}")
-            sform = self.get_sform()
-            if sform[0,0] > 0: sform[0,0] *= -1
-            if sform[1,1] > 0: sform[1,1] *= -1
-            if sform[2,2] > 0: sform[2,2] *= -1
-            self.set_sform(sform)
-        elif self.get_sform_code() == 0 and self.get_qform_code() == 1:
-            logger.info(f"Detected qform_code of 1 for {self.get_filename()}")
-            qform = self.get_qform()
-            if qform[0,0] > 0: print("Flipping qform x"); qform[0,0] *= -1
-            if qform[1,1] > 0: print("Flipping qform y"); qform[1,1] *= -1
-            if qform[2,2] > 0: print("Flipping qform z"); qform[2,2] *= -1
-            self.set_qform(qform)
-        else:
-            logger.info("Passing")
-            pass
-
-            
-            
-        #    logger.info(f"Current orientation of {self.get_filename()}: {self.get_axcodes()}")
-        #    print(self.__get_srow_matrix())
-        #    logger.info("Reorienting to RAS...")
-        #    hdr = self.get_header()
-        #    if not hdr['srow_x'][0] < 0: 
-        #        hdr['srow_x'] = np.multiply(hdr['srow_x'], np.array([-1, 1, 1, 1]))  
-        #    if not hdr['srow_y'][0] < 0: 
-        #        hdr['srow_y'] = np.multiply(hdr['srow_y'], np.array([-1, -1, 1, 1]))  
-        #    if not hdr['srow_z'][0] < 0: 
-        #        hdr['srow_z'] = np.multiply(hdr['srow_z'], np.array([-1, 1, -1, 1]))  
-             
-          #  if not hdr['srow_x'][0] < 0: logger.info("Flipping x"); hdr['srow_x'][0] = 400
-          #  if not hdr['srow_y'][1] < 0: logger.info("Flipping y"); hdr['srow_y'][1] *= -1
-          #  if not hdr['srow_z'][2] < 0: logger.info("Flipping z"); hdr['srow_z'][2] *= -1
-
-#            logger.info(f"New orientation of {self.get_filename()}: {self.get_axcodes()}")
+        sform = self.get_sform()
+        if sform[0,0] > 0: sform[0,0] *= -1
+        if sform[1,1] > 0: sform[1,1] *= -1
+        if sform[2,2] > 0: sform[2,2] *= -1
+        self.set_sform(sform)
 
     def is_matched_by_sform(self, other: Self) -> bool:
         return np.all(self.get_sform() == other.get_sform())
