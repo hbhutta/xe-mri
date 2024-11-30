@@ -18,6 +18,12 @@ For more explanation of the flags used to run `main.py`, run:
 python main.py --help
 ```
 
+# Installing dependencies
+Only install locally installed packages (excludes globally installed packages) and does not ask for user input
+```bash
+pip freeze --local --no-input > requirements.txt
+```
+
 # Refactoring updates
 In the current design `utils.py` has many unrelated functions put together in one file. `utils.py` should not just be a dump of various utility functions, these functions should at least be related somehow. 
 

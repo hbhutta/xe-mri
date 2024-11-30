@@ -1,12 +1,10 @@
 
-# Install Python and other executables that will live inside the bin file
-RUN apt-get update && apt-get install -y \
-        python \
+# Install executables
+RUN apt-get update && apt-get install --yes-assume \
+    python \
+    nifti_tool
 
-# Install the python packages based on the requirements.txt file
-# in the local folder (git repo).
-# Also ensure that unnecessary/garbage packages are removed before 
-# running this
+# Install Python dependencies
 COPY setup/requirements.txt requirements.txt
 RUN pip install -r requirements.txt
 
