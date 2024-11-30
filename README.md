@@ -1,25 +1,17 @@
-This registers MRI to CT images for a patient (or a batch of patients)
+
+# About
+This pipeline registers MRI to CT images for a patient (or a batch of patients)
 and applies the forward transforms from the registration to the 
-ventilation images
+ventilation images. `--dir` specifies either a single patient directory or a batch of patient directories.
 
-
-Run pipeline with
-
-```python
-
-python main.py --dir DIR
-``` 
-
-`DIR` is either a single patient directory or a batch of patient directories.
-
-For more explanation of the flags used to run `main.py`, run:
-
-```python
-python main.py --help
+For more information about the flag, run:
+```
+docker run --help
 ```
 
 # Installing dependencies
 Only install locally installed packages (excludes globally installed packages) and does not ask for user input
+
 ```bash
 pip freeze --local --no-input > requirements.txt
 ```
@@ -29,7 +21,8 @@ In the current design `utils.py` has many unrelated functions put together in on
 
 `utils.py` can be made more organized by making a separate subclass of `nib.nifti1.Nifti1Image` and then making any NIFTI related functions class methods of this subclass. This would also be object-oriented.
 
-# Using Docker
-Use the Dockerfile to build an image
-
-Run a container from the image
+# Usage
+If we have a directory called `PIm_0123/`, we can run the pipeline with:
+```bash
+docker run --dir PIm_0123
+```

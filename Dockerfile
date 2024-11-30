@@ -13,4 +13,7 @@ RUN pip install -r requirements.txt
 # Run pipeline
 ENTRYPOINT ["python", "main.py"]
 
+# Usage (--help flag): docker run --help 
+# Usage (--dir flag): docker run --dir <dir>
+
 
