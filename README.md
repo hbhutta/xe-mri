@@ -13,6 +13,7 @@ pip freeze --local --no-input > requirements.txt
 If we have a directory called `PIm_0123/`, we can run the pipeline with:
 ```bash
 git clone https://github.com/hbhutta/xe-mri.git
+cd xe-mri
 docker build -t xe_mri_image ./Dockerfile
 docker run xe_mri_image --dir PIm_0123/
 ```
