@@ -1,7 +1,10 @@
+import os
+from time import sleep
 from absl import app, flags
 
 from classes.Image import NII
-from utils.utils import *
+from utils.os_utils import contains_subdir, get_files, get_subdirs
+from utils.nifti_utils import mod_field, disp_field
 from utils.enums import CODE
 
 from nibabel.nifti1 import Nifti1Image
@@ -41,27 +44,69 @@ def process(patient_dir: str) -> None:
     for img in [ct_img, ct_mask]:
         logger.info(f"Checking sform codes for {img.get_filename()}")
         out = None
+       
+        # Ensure that sform_code = 1
         if img.get_sform_code() == 0:
-            out = subprocess.run(["bash", "scripts/modify_xform.sh", "-s", "1", "-f", f"{img.get_filename()}"])
-        elif img.get_sform_code() == 1:
-            logger.info(f"File {img.get_filename()} already has sform_code = 1 and qform_code = 1")
+            out = subprocess.run(["bash", "scripts/mod_nii.sh", 
+                                  "-f", "sform_code",                   # Field to modify
+                                  "-v", "1",                            # New value
+                                  "-n", f"{img.get_filename()}"])       # NIFTI file
+            logger.info(out.stdout)
+        else:
+            logger.info(f"sform_code is already 1")
+        sleep(2) 
+        
+        # Ensure that quatern_d = 1
+        if img.get_quatern("d") == 0:
+            out = subprocess.run(["bash", "scripts/mod_nii.sh", 
+                                  "-f", "quatern_d",                    # Field to modify
+                                  "-v", "1",                            # New value
+                                  "-n", f"{img.get_filename()}"])       # NIFTI file
+            logger.info(out.stdout)
+            logger.info(f"The unit quaternion is now: {img.get_unit_quaternion()}")
+        else:
+            logger.info(f"quatern_d is already 1")
+        sleep(2) 
 
-        # out = None in the case that xfrom codes were not modified        
-        if out != None and out.returncode == 0:
-            logger.info(f"{img.get_filename()} sform code and qform changed.")
-            img_ = NII(filename=img.get_filename()) # Reload/reread image (the filename will not have changed)
-            logger.info(f"New sform_code of {img.get_filename()}: {img_.get_sform_code()}")
+        # Ensure that qform_code = 1
+        if img.get_qform_code() == 0:
+            out = subprocess.run(["bash", "scripts/mod_nii.sh", 
+                                  "-f", "qform_code",                   # Field to modify
+                                  "-v", "1",                            # New value
+                                  "-n", f"{img.get_filename()}"])       # NIFTI file
+            logger.info(out.stdout)
+        else:
+            logger.info(f"qform_code is already 1")
+        sleep(2) 
+  
+        logger.info(f"Original sform affine:\n{img.get_sform()}")
+        logger.info(f"Original qform affine:\n{img.get_qform()}")
+          
+        # Reload image because original data was changed by script 
+        img = NII(filename=get_files(dir=patient_dir, files=os.path.basename(img.get_filename())))
+        img.save(filename=img.get_filename()) 
+       
+        logger.info(f"New sform affine:\n{img.get_sform()}")
+        logger.info(f"New qform affine:\n{img.get_qform()}")
         continue
+        
+        if out != None and out.returncode == 0:
+            logger.info(f"{img.get_filename()} has sform code changed")
+            logger.info(f"New sform_code of {img.get_filename()}: {img.get_sform_code()}")
     
         ax = ''.join(img.get_axcodes())
         logger.info(f"File {img.get_filename()} currently has RAS orientation: {ax}")
+        
         if ax != "RAS":
             img.toRAS()
+            print(img.get_sform())
+            #assert img.get_axcodes() == tuple("RAS")
+            logger.info(f"File {img.get_filename()} has axcodes {img.get_axcodes()} after reorientation.")
         else:
             logger.info(f"File {img.get_filename()} in proper orientation (RAS). Leaving unchanged...") 
-     
+    
+    assert 0 == 1 
     logger.info(f"xform codes and orientation fixed, aligning CT image to mask...")
-    assert 0 == 1
     x, y, z = ct_img.get_origin()
     ct_mask.translate(x, y, z)
     

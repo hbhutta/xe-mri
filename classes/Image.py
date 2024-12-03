@@ -108,6 +108,15 @@ class NII():
     def get_quatern(self, quatern: str) -> int:
         hdr = self.get_header()
         return hdr['quatern_' + quatern] 
+    
+    def get_unit_quaternion(self) -> np.array:
+        hdr = self.get_header()
+        b = self.get_quatern('b')
+        c = self.get_quatern('c')
+        d = self.get_quatern('d')
+        a = np.sqrt(1.0 - (b**2 + c**2 + d**2))
+        
+        return np.asarray([a, b, c, d])
  
     def set_quaterns(self, quatern_b: float | None = 0.0, quatern_c: float | None = 0.0, quatern_d: float | None = 0.0) -> None:
         hdr = self.get_header()
@@ -190,7 +199,6 @@ class NII():
         
     def set_qform(self, qform) -> None:
         hdr = self.get_header()
-        self.set_sform(sform=qform) # !!! Also set sform to match qform
         hdr.set_qform(affine=qform)
         self.__save_header(hdr, verbose=True)
     
