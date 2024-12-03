@@ -6,56 +6,6 @@ from nibabel.filebasedimages import FileBasedImage
 from nibabel.nifti1 import Nifti1Image
 
 
-"""
-Given a directory, list the files common to all the first-level subdirectories
-"""
-
-
-def get_common_files(base_dir: str, filename: str | None) -> list[str]:
-    file_sets_by_subdir = {}
-    sample_subdir = None
-    for subdir in os.listdir(base_dir):
-        sample_subdir = subdir
-        print(sample_subdir)
-        subdir_path = os.path.join(base_dir, subdir)
-        files = [file for file in os.listdir(subdir_path)]
-        file_sets_by_subdir[subdir] = set(files)
-
-    common_files = file_sets_by_subdir[sample_subdir]
-    for key in file_sets_by_subdir.keys():
-        common_files &= file_sets_by_subdir[key]
-
-    common_files = list(common_files)
-    all_file_paths = glob.glob('**/*', root_dir=base_dir)
-    common_file_paths = [file_path for file_path in all_file_paths if any(
-        common_file in file_path for common_file in common_files)]
-
-    ret = [os.path.join(base_dir, file_path)
-           for file_path in common_file_paths]
-
-    if filename:
-        return list(filter(lambda x: filename in x, ret))
-    return ret
-
-
-def contains_subdir(dir_: str | os.PathLike) -> bool:
-    for item in os.listdir(dir_):
-        item_path = os.path.join(dir_, item)
-        if os.path.isdir(item_path):
-            return True
-    return False
-
-
-"""
-Return the paths to the subdirs of a given dir
-"""
-
-
-def get_subdirs(dir_: str | os.PathLike) -> list[str]:
-    return [os.path.join(dir_, subdir) for subdir in os.listdir(dir_)]
-
-
-
 def flip_ct_or_mri(img, type: bool) -> None:
     aff = img.affine
     if type:  # CT
@@ -69,13 +19,6 @@ def flip_ct_or_mri(img, type: bool) -> None:
                         [0, 0, 0, 1]])
 
     img.set_qform(aff)
-
-
-"""
-Helper function that calls nib.save() but
-prints out more information such as:
-1. RAS orientation 
-"""
 
 
 """
@@ -130,7 +73,6 @@ def split_mask(mask_image_file_path: str, return_imgs: bool | None) -> list[np.m
     (one for each lobe), then there should be five splits
     """
 
-    '''
     assert len(splits) == len(vals)
     n = len(splits)
 
@@ -148,7 +90,6 @@ def split_mask(mask_image_file_path: str, return_imgs: bool | None) -> list[np.m
         of value val[i] in the original mask
         """
         assert count_(data=splits[i], target=vals[i]) == count_(mask, vals[i])
-    '''
 
     if return_imgs:
         print("Making Nifti1Image objects out of splits data")
@@ -174,10 +115,6 @@ def split_mask(mask_image_file_path: str, return_imgs: bool | None) -> list[np.m
     return splits
 
 
-def get_qfac(img: FileBasedImage) -> int:
-    return img.header['pixdim'][0]
-
-
 """
 Returns the element-wise (Hadamard) product between the mask and the data
 """
@@ -188,14 +125,3 @@ def apply_mask(mask: np.memmap | np.ndarray, data: np.memmap | np.ndarray) -> np
         print("Mask and data shapes match, applying mask...")
         return np.multiply(mask, data)
     return None
-
-
-"""
-Get file paths in dir from list of files and path to dir
-"""
-
-
-def get_files(dir: str, files: list[str] | str) -> list[str] | str:
-    if type(files) == str:
-        return os.path.join(dir, files)
-    return [os.path.join(dir, fn) for fn in files]
