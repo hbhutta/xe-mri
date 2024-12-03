@@ -191,9 +191,9 @@ class NII():
     
     def toRAS(self) -> None:
         sform = self.get_sform()
-        if sform[0,0] > 0: sform[0,0] *= -1
-        if sform[1,1] > 0: sform[1,1] *= -1
-        if sform[2,2] > 0: sform[2,2] *= -1
+        if sform[0,0] > 0: logger.info("Flipping along x-axis"); sform[0,0] *= -1
+        if sform[1,1] > 0: logger.info("Flipping along y-axis"); sform[1,1] *= -1
+        if sform[2,2] > 0: logger.info("Flipping along z-axis"); sform[2,2] *= -1
         self.set_sform(sform)
 
     def is_matched_by_sform(self, other: Self) -> bool:
@@ -212,7 +212,7 @@ class NII():
         return aff2axcodes(aff=self.get_affine(), labels=(('R', 'L'), ('A', 'P'), ('S', 'I')))
 
     def save(self, filename: str) -> None:
-        if filename == self.get_filename():
+        if filename == self.get_filename(): # Overwrite 
             copy_filename = filename[:-4] + "_copy.nii"  # Create copy
             # Save copy with original filename
             nib.save(img=self.__img, filename=copy_filename)
