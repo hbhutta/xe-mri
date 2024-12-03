@@ -12,12 +12,16 @@ OPTIONS:
 EOF
 }
 
+function rename() {
+    fname=$(basename "$1" .nii)
+    dname=$(dirname -- "$1")
+    new_fname="${dname}/${fname}_mod_${2}.nii"
+    echo $new_fname
+}
+
 sflag=
 pflag=
 fflag=
-
-
-
 
 # getopts usage: getopts optstring name [args]
 OPTSTRING="s:q:f:h" # s, q, and f require arguments, but not h
@@ -41,13 +45,29 @@ while getopts ${OPTSTRING} opt; do
     esac
 done
 
-if [[ -n "$sflag" ]]; then
+if [[ -n "$sflag" && ! -n "$qflag" ]]; then
+    new_file=$(rename $fflag "s")
     # Modify sform_code and overwrite file
-    nifti_tool -mod_hdr -mod_field sform_code "$sflag" -infiles "$fflag" -prefix "$fflag"
-
+    nifti_tool -mod_hdr -mod_field sform_code "$sflag" -infiles "$fflag" -prefix "$new_file"
 fi
 
-if [[ -n "$qflag" ]]; then
-    # Modify qform_code and overwrite file
-    nifti_tool -mod_hdr -mod_field qform_code "$qflag" -infiles "$fflag" -prefix "$fflag"
+if [[ ! -n "$sflag" && -n "$qflag" ]]; then
+    new_file=$(rename $fflag "q")
+    # Modify sform_code and overwrite file
+    nifti_tool -mod_hdr -mod_field sform_code "$sflag" -infiles "$fflag" -prefix "$new_file"
 fi
+
+if [[ -n "$sflag" && -n "$qflag" ]]; then
+    new_file=$(rename $fflag "s_q")
+    # Modify sform_code and overwrite file
+    nifti_tool -mod_hdr -mod_field sform_code "$sflag" -infiles "$fflag" -prefix "$new_file"
+fi
+
+if [[ ! -n "$sflag" && ! -n "$qflag" ]]; then
+    # Modify sform_code and overwrite file
+    nifti_tool -mod_hdr -mod_field sform_code "$sflag" -infiles "$fflag" -prefix "$new_file"
+fi
+
+
+
+

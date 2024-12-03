@@ -37,16 +37,14 @@ flags.DEFINE_string(name="dir", default=None, help="""
 def process(patient_dir: str) -> None:
     ct_img = NII(filename=get_files(dir=patient_dir, files="CT.nii"))
     ct_mask = NII(filename=get_files(dir=patient_dir, files="CT_mask.nii"))
-        
+    
     for img in [ct_img, ct_mask]:
         logger.info(f"Checking xform codes for {img.get_filename()}")
         out = None
-        if img.get_sform_code() == 0 and img.get_qform_code() == 0:
-            out = subprocess.run(["sh", "scripts/modify_xform.sh", "-s", "1", "-q", "1", "-f", f"{img.get_filename()}"])
-        elif img.get_sform_code() == 1 and img.get_qform_code() == 0:
-            out = subprocess.run(["sh", "scripts/modify_xform.sh", "-q", "1", "-f", f"{img.get_filename()}"])
+        if img.get_qform_code() == 0:
+            out = subprocess.run(["bash", "scripts/modify_xform.sh", "-s", "1", "-q", "1", "-f", f"{img.get_filename()}"])
         elif img.get_sform_code() == 0 and img.get_qform_code() == 1:
-            out = subprocess.run(["sh", "scripts/modify_xform.sh", "-s", "1", "-f", f"{img.get_filename()}"])
+            out = subprocess.run(["bash", "scripts/modify_xform.sh", "-s", "1", "-f", f"{img.get_filename()}"])
         elif img.get_sform_code() == 1 and img.get_qform_code() == 1:
             logger.info(f"File {img.get_filename()} already has sform_code = 1 and qform_code = 1")
 
@@ -55,15 +53,17 @@ def process(patient_dir: str) -> None:
             logger.info(f"{img.get_filename()} sform code and qform changed.")
             img_ = NII(filename=img.get_filename()) # Reload/reread image (the filename will not have changed)
             logger.info(f"New sform_code of {img.get_filename()}: {img_.get_sform_code()}")
-
+        continue
+    
         ax = ''.join(img.get_axcodes())
         logger.info(f"File {img.get_filename()} currently has RAS orientation: {ax}")
         if ax != "RAS":
             img.toRAS()
         else:
             logger.info(f"File {img.get_filename()} in proper orientation (RAS). Leaving unchanged...") 
-        
+     
     logger.info(f"xform codes and orientation fixed, aligning CT image to mask...")
+    assert 0 == 1
     x, y, z = ct_img.get_origin()
     ct_mask.translate(x, y, z)
     
@@ -74,9 +74,7 @@ def process(patient_dir: str) -> None:
     except AssertionError as e:
         logger.info(f"Unable to match origin of {ct_mask.get_filename()} to origin of {ct_img.get_filename()}!")
         return
-
-        
-
+       
     # for fn in original_files[1:]:  # Resize all files except for CT_mask.nii
     #     print(patient_dir)
     #     print(os.path.basename(fn))
