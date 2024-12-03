@@ -105,6 +105,10 @@ class NII():
         self.__save_header(hdr)
         logger.info(f"Origin of {self.get_filename()} after translation: {self.get_origin()}")
 
+    def get_quatern(self, quatern: str) -> int:
+        hdr = self.get_header()
+        return hdr['quatern_' + quatern] 
+ 
     def set_quaterns(self, quatern_b: float | None = 0.0, quatern_c: float | None = 0.0, quatern_d: float | None = 0.0) -> None:
         hdr = self.get_header()
 
@@ -186,15 +190,24 @@ class NII():
         
     def set_qform(self, qform) -> None:
         hdr = self.get_header()
+        self.set_sform(sform=qform) # !!! Also set sform to match qform
         hdr.set_qform(affine=qform)
         self.__save_header(hdr, verbose=True)
     
     def toRAS(self) -> None:
-        sform = self.get_sform()
-        if sform[0,0] > 0: logger.info("Flipping along x-axis"); sform[0,0] *= -1
-        if sform[1,1] > 0: logger.info("Flipping along y-axis"); sform[1,1] *= -1
-        if sform[2,2] > 0: logger.info("Flipping along z-axis"); sform[2,2] *= -1
-        self.set_sform(sform)
+        logger.info(f"Reorienting {self.get_filename()} to RAS")
+        # Maybe only the qform is affected by flipping
+        aff = self.get_qform()
+        for i in range(3):
+            if (aff[i][i] > 0):
+                aff[i][i] = -aff[i][i]
+        self.set_qform(aff)
+   
+#    nib_ct.set_qform(ct_aff) 
+        # qform = self.get_qform()
+        # if qform[0,0] > 0: logger.info("Flipping along x-axis"); qform[0,0] *= -1
+        # if qform[1,1] > 0: logger.info("Flipping along y-axis"); qform[1,1] *= -1
+        # if qform[2,2] > 0: logger.info("Flipping along z-axis"); qform[2,2] *= -1
 
     def is_matched_by_sform(self, other: Self) -> bool:
         return np.all(self.get_sform() == other.get_sform())
