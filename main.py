@@ -39,13 +39,11 @@ def process(patient_dir: str) -> None:
     ct_mask = NII(filename=get_files(dir=patient_dir, files="CT_mask.nii"))
     
     for img in [ct_img, ct_mask]:
-        logger.info(f"Checking xform codes for {img.get_filename()}")
+        logger.info(f"Checking sform codes for {img.get_filename()}")
         out = None
-        if img.get_qform_code() == 0:
-            out = subprocess.run(["bash", "scripts/modify_xform.sh", "-s", "1", "-q", "1", "-f", f"{img.get_filename()}"])
-        elif img.get_sform_code() == 0 and img.get_qform_code() == 1:
+        if img.get_sform_code() == 0:
             out = subprocess.run(["bash", "scripts/modify_xform.sh", "-s", "1", "-f", f"{img.get_filename()}"])
-        elif img.get_sform_code() == 1 and img.get_qform_code() == 1:
+        elif img.get_sform_code() == 1:
             logger.info(f"File {img.get_filename()} already has sform_code = 1 and qform_code = 1")
 
         # out = None in the case that xfrom codes were not modified        
