@@ -273,24 +273,24 @@ def main(argv):
             mask_new_q_offset_y = float(CT.header['qoffset_y'])
             mask_new_q_offset_z = float(CT.header['qoffset_z'])
 
-            mod_field(CT_mask.get_filename(), field="qoffset_X",
-                      value=list2str(mask_new_q_offset_x))
+            mod_field(CT_mask.get_filename(), field="qoffset_x",
+                      value=mask_new_q_offset_x)
             mod_field(CT_mask.get_filename(), field="qoffset_y",
-                      value=list2str(mask_new_q_offset_y))
+                      value=mask_new_q_offset_y)
             mod_field(CT_mask.get_filename(), field="qoffset_z",
-                      value=list2str(mask_new_q_offset_z))
+                      value=mask_new_q_offset_z)
 
             # Translate (encode change in mask srow_x origin)
-            mask_new_pixdim_1 = float(CT.header['pixdim'][1])
-            mask_new_pixdim_2 = float(CT.header['pixdim'][2])
-            mask_new_pixdim_3 = float(CT.header['pixdim'][3])
-
+            mask_new_srow_x = CT.header['srow_x']
+            mask_new_srow_y = CT.header['srow_y']
+            mask_new_srow_z = CT.header['srow_z']
+            
             mod_field(CT_mask.get_filename(), field="srow_x",
-                      value=list2str(mask_new_pixdim_1))
+                      value=list2str(mask_new_srow_x))
             mod_field(CT_mask.get_filename(), field="srow_y",
-                      value=list2str(mask_new_pixdim_2))
+                      value=list2str(mask_new_srow_y))
             mod_field(CT_mask.get_filename(), field="srow_z",
-                      value=list2str(mask_new_pixdim_3))
+                      value=list2str(mask_new_srow_z))
 
 
 #            process(patient_dir=subdir)
