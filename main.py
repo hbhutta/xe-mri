@@ -3,13 +3,17 @@ from time import sleep
 from absl import app, flags
 
 from classes.Image import NII
-from utils.os_utils import contains_subdir, get_files, get_subdirs
+from utils.os_utils import contains_subdir, get_files, get_subdirs, list2str
 from utils.nifti_utils import mod_field, disp_field
 from utils.enums import CODE
-
+import nibabel as nib
 from nibabel.nifti1 import Nifti1Image
+from nibabel.orientations import aff2axcodes
 
 import subprocess
+
+def get_axcodes(img: Nifti1Image) -> tuple:
+    return aff2axcodes(aff=img.affine, labels=(('L', 'R'), ('P', 'A'), ('I', 'S')))
 
 # from scripts.reorient import reorient
 # from scripts.register import register
@@ -168,8 +172,13 @@ def process(patient_dir: str) -> None:
 #        warp_vent(ct=ct_file, dir=patient_dir, vent=ven)
 #
 #
- 
 
+"""
+If qfac = 1 -> RAI is proper
+if qfac = -1 -> RAS is proper
+"""
+ 
+from time import sleep
 def main(argv):
     dir_ = FLAGS.dir
     print(dir_)
@@ -177,12 +186,83 @@ def main(argv):
         print("Recieved a batch directory of multiple patients.")
         for subdir in get_subdirs(dir_):
             print(f"Processing patient {subdir[5:]}")
-            process(patient_dir=subdir)
+            
+            CT = nib.load(get_files(dir=subdir, files="CT.nii"))
+            CT_mask = nib.load(get_files(dir=subdir, files="CT_mask.nii"))
+            
+            pixdim_1 = float(CT.header['pixdim'][1])
+            pixdim_2 = float(CT.header['pixdim'][2])
+            pixdim_3 = float(CT.header['pixdim'][3])
+            
+            qoffset_x = float(CT.header['qoffset_x'])
+            qoffset_y = float(CT.header['qoffset_y'])
+            qoffset_z = float(CT.header['qoffset_z'])
+                
+            if (CT.header['pixdim'][0]) == 1:
+                srow_x = [-1*pixdim_1, 0., 0., qoffset_x]
+                srow_y = [0., -1*pixdim_2, 0., qoffset_y]
+                srow_z = [0., 0., 1*pixdim_3, qoffset_z]
+            elif (CT.header['pixdim'][0]) == -1:
+                srow_x = [-1*pixdim_1, 0., 0., qoffset_x]
+                srow_y = [0., -1*pixdim_2, 0., qoffset_y]
+                srow_z = [0., 0., -1*pixdim_3, qoffset_z]
+
+            mod_field(CT.get_filename(), field="srow_x", value=list2str(srow_x))
+            mod_field(CT.get_filename(), field="srow_y", value=list2str(srow_y))
+            mod_field(CT.get_filename(), field="srow_z", value=list2str(srow_z))
+
+            CT = nib.load(get_files(dir=subdir, files="CT.nii"))
+            
+            # if CT.header['pixdim'][0] != 1:
+            #     pixdim = CT.header['pixdim']                                            
+            #     pixdim[0] = 1.0
+            #     print('list2str pixdim...')
+            #     print(list2str(pixdim))
+            #     mod_field(CT.get_filename(), field="pixdim", value=list2str(pixdim))
+            #     CT = nib.load(get_files(dir=subdir, files="CT.nii"))
+               
+            if CT_mask.header['pixdim'][0]:
+                pixdim = CT_mask.header['pixdim']
+                pixdim[0] = CT.header['pixdim'][0] # CT.header['pixdim][0] # Make the qfac match that of the CT ???
+                mod_field(CT_mask.get_filename(), field="pixdim", value=list2str(pixdim))
+                CT_mask = nib.load(get_files(dir=subdir, files="CT_mask.nii"))
+                
+            if CT.header['qform_code'] != 1:
+                mod_field(CT.get_filename(), field="qform_code", value=1)
+                CT = nib.load(get_files(dir=subdir, files="CT.nii"))
+
+            if CT.header['sform_code'] != 1:
+                mod_field(CT.get_filename(), field="sform_code", value=1)
+                CT = nib.load(get_files(dir=subdir, files="CT.nii"))
+
+            if CT.header['quatern_d'] != 1:
+                mod_field(CT.get_filename(), field="quatern_d", value=1)
+                CT = nib.load(get_files(dir=subdir, files="CT.nii"))
+
+            if CT_mask.header['qform_code'] != 1:
+               mod_field(CT_mask.get_filename(), field="qform_code", value=1)
+               CT_mask = nib.load(get_files(dir=subdir, files="CT_mask.nii"))
+
+            if CT_mask.header['sform_code'] != 1:
+               mod_field(CT_mask.get_filename(), field="sform_code", value=1)
+               CT_mask = nib.load(get_files(dir=subdir, files="CT_mask.nii"))
+
+            if CT_mask.header['quatern_d'] != 1:
+               mod_field(CT_mask.get_filename(), field="quatern_d", value=1)
+               CT_mask = nib.load(get_files(dir=subdir, files="CT_mask.nii"))
+          
+            print("CT axcodes: ", get_axcodes(CT))
+            print("CT_mask axcodes: ", get_axcodes(CT_mask))
+            print("qfac: ", CT.header['pixdim'][0]) 
+            print("srow_x: ", CT.header['srow_x'])
+            print("srow_y: ", CT.header['srow_y'])
+            print("srow_z: ", CT.header['srow_z'])
+
+#            process(patient_dir=subdir)
     else:
         print("Recieved a directory of single patient.")
         print(f"Processing patient {dir_[5:]}")
-        process(patient_dir=dir_)
-
+#        process(patient_dir=dir_)
 
 if __name__ == "__main__":
     app.run(main)
